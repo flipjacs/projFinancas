@@ -142,19 +142,19 @@ def build_recommendation(
     risk: RiskLevel, remaining_after: Decimal, salary: Decimal
 ) -> str:
     if Decimal(salary) <= ZERO:
-        return "Cannot evaluate purchase: monthly salary is not set."
+        return "Não dá pra avaliar a compra: o salário mensal ainda não foi definido."
     if Decimal(remaining_after) < ZERO:
         return (
-            "Purchase rejected: this commitment exceeds your monthly income "
-            "and would leave you in deficit."
+            "Melhor não fazer essa compra: o compromisso passa da sua renda "
+            "mensal e te deixaria no negativo."
         )
     if risk is RiskLevel.LOW:
-        return "Purchase is comfortably within your budget."
+        return "A compra cabe tranquilamente no seu orçamento."
     if risk is RiskLevel.MEDIUM:
-        return "Purchase is acceptable but close to safe limit."
+        return "A compra é viável, mas chega perto do limite seguro."
     return (
-        "Purchase not recommended: it would commit a high share of your "
-        "monthly income and leave little room for unexpected expenses."
+        "Não é uma boa hora: a compra tomaria uma fatia grande do seu salário "
+        "e deixaria pouca margem para imprevistos."
     )
 
 
@@ -167,18 +167,18 @@ def build_warnings(
 ) -> list[str]:
     warnings: list[str] = []
     if Decimal(salary) <= ZERO:
-        warnings.append("Monthly salary is zero — set your salary to get a meaningful analysis.")
+        warnings.append("Seu salário está zerado — defina um valor para receber uma análise útil.")
         return warnings
     if Decimal(remaining_after) < ZERO:
-        warnings.append("Remaining balance after purchase would be negative.")
+        warnings.append("O saldo do mês ficaria negativo depois desta compra.")
     if Decimal(new_installment) > Decimal(salary):
-        warnings.append("A single installment would exceed your monthly salary.")
+        warnings.append("Uma única parcela já passa do seu salário mensal.")
     if (
         Decimal(existing_committed) / Decimal(salary)
     ) * ONE_HUNDRED >= SAFE_COMMITMENT_THRESHOLD:
         warnings.append(
-            "Your existing commitments already use a large share of your income."
+            "Seus compromissos atuais já comprometem uma fatia grande do salário."
         )
     if Decimal(monthly_impact_pct) >= MEDIUM_RISK_THRESHOLD:
-        warnings.append("Total monthly commitment would be in the high-risk range.")
+        warnings.append("O compromisso mensal total ficaria em zona de risco alto.")
     return warnings

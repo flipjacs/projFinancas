@@ -1,156 +1,231 @@
 # Financeiro — Frontend
 
-React + Vite + TypeScript SPA that talks to the FastAPI backend in this same repository. This phase ships the **foundation** only: authentication, layout system, theming, and the API integration layer. Domain pages (expenses, installments, financial planning, discipline mode) plug into this scaffold in later phases.
+SPA em React 18 + Vite + TypeScript que conversa com o backend em FastAPI do mesmo repositório.
+Foi pensado como um pequeno *dashboard* de finanças pessoais: registra gastos, parcelamentos
+e roda a análise *"posso comprar isso?"* contra a API.
+
+```
+Login ──►  /painel  →  /gastos ─ /parcelamentos ─ /posso-comprar ─ /configuracoes
+                       ▲ AppLayout compartilhado · Suspense · ErrorBoundary
+```
 
 ---
 
-## Tech stack
+## Stack e o porquê de cada escolha
 
-- **React 18** + **TypeScript**
-- **Vite 5** — dev server, HMR, production bundle
-- **TailwindCSS 3** + **shadcn/ui** primitives
-- **React Router 6** — client-side routing
-- **Zustand** + **localStorage** — auth state with persistence
-- **TanStack React Query** — server-state cache (configured, ready for the next phase)
-- **Axios** — HTTP client with JWT and error interceptors
-- **react-hook-form** + **zod** — form validation
-- **lucide-react** — icons
+| Camada | Escolha | Motivo |
+| --- | --- | --- |
+| UI | **React 18** + **TypeScript** | Tipagem estrita; tipos batem com o schema do backend. |
+| Build | **Vite 5** | HMR rápido; build de produção com chunking manual (charts/forms/Radix). |
+| Estilo | **TailwindCSS 3** + componentes estilo shadcn | Design tokens centralizados em `src/components/ui/`. |
+| Rotas | **React Router 6** + **React.lazy** | Code-splitting por rota; guards de auth. |
+| Auth state | **Zustand** (persistente) | Store leve, casa bem com o interceptor do axios. |
+| Server state | **TanStack React Query** | Cache, invalidação automática; a barra de progresso usa `useIsFetching()`. |
+| Formulários | **react-hook-form** + **zod** | Validação por schema. |
+| HTTP | **axios** + interceptors | Injeção de JWT, `ApiError` normalizado, handler global de 401. |
+| Gráficos | **recharts** | Carregado sob demanda — só baixa nas páginas que usam. |
+| Ícones | **lucide-react** | Tree-shakeable. |
+| Toasts | **sonner** | API simples e respeita o tema. |
 
 ---
 
-## Quickstart
+## Como rodar
 
-### Local dev (recommended)
+### Local
 
-The backend must be running on `http://localhost:8000`. From this directory:
+O backend precisa estar rodando em `http://localhost:8000`. A partir desta pasta:
 
 ```bash
-cp .env.example .env       # optional — see env vars below
+cp .env.example .env       # opcional — ver variáveis abaixo
 npm install
 npm run dev
 ```
 
-The dev server is at <http://localhost:5173> and proxies `/api/v1` and `/health` to the backend, so you don't need to deal with CORS in development.
+A app sobe em <http://localhost:5173> e faz proxy de `/api/v1` + `/health` para o backend
+— assim, em desenvolvimento, você não lida com CORS.
 
-### Docker
+### Docker (stack completa)
 
-From the repo root:
+A partir da raiz do repositório:
 
 ```bash
 docker compose up --build
 ```
 
-That builds the multi-stage frontend image (Node 20 builder → nginx 1.27 runtime), serves the static bundle on <http://localhost:5173>, and reverse-proxies API requests to the `backend` service over the internal Compose network.
+Build multi-stage (Node 20 → nginx 1.27). O mesmo nginx serve a SPA na porta 5173 e faz
+reverse-proxy de `/api/v1` para o serviço `backend` pela rede do Compose, então o bundle
+usa same-origin tanto em dev quanto em produção.
+
+Depois de alterar código:
+
+```bash
+docker compose build frontend && docker compose up -d frontend
+```
 
 ---
 
-## Available scripts
+## Scripts
 
-| script | what it does |
+| script | o que faz |
 | --- | --- |
-| `npm run dev`         | Vite dev server with HMR |
-| `npm run build`       | Type-check (`tsc -b`) and build the production bundle into `dist/` |
-| `npm run preview`     | Serve the built bundle locally to sanity-check production output |
-| `npm run lint`        | ESLint pass over `src/` |
-| `npm run type-check`  | `tsc --noEmit` only |
+| `npm run dev`         | Servidor de desenvolvimento com HMR + proxy da API |
+| `npm run build`       | Type-check (`tsc -b`) e gera o bundle em `dist/` |
+| `npm run preview`     | Serve o bundle de produção pra testar local |
+| `npm run lint`        | ESLint em `src/` |
+| `npm run type-check`  | Só `tsc --noEmit` |
 
 ---
 
-## Architecture
+## Estrutura
 
 ```
 src/
-├── components/         Shared components (UI primitives + ProtectedRoute, ThemeToggle)
-│   └── ui/             shadcn/ui primitives (button, input, label, card, dropdown-menu)
-├── contexts/           React contexts (ThemeContext)
-├── hooks/              Reusable hooks (useAuth)
-├── layouts/            App + Auth shells (Sidebar, Navbar, AppLayout, AuthLayout, nav config)
-├── lib/                Cross-cutting helpers (api.ts axios instance, utils.ts cn helper)
-├── pages/              Route components (Login, Register, Dashboard, NotFound)
-├── routes/             Router definition (AppRouter)
-├── services/           Typed API clients (auth.service, user.service)
-├── stores/             Zustand stores (authStore)
-├── styles/             Global styles + Tailwind tokens
-├── types/              Shared TypeScript types (api, auth, user)
-├── utils/              Pure helpers (currency/percent formatters)
-├── App.tsx             Top-level providers (QueryClient, ThemeProvider, BrowserRouter)
-└── main.tsx            React root
+├── components/              UI compartilhada (StatCard, ChartCard, EmptyState, RiskBadge,
+│   │                        ErrorBoundary, TopProgress, PageFallback, QuickNavDialog,
+│   │                        ShortcutsDialog, QueryErrorState, ProtectedRoute, …)
+│   ├── ui/                  Primitivas no estilo shadcn (Button, Card, Dialog, Progress, …)
+│   ├── charts/              Wrappers do Recharts (lazy junto com as páginas)
+│   ├── expenses/            Componentes da página /gastos
+│   ├── installments/        Componentes da página /parcelamentos
+│   └── financial/           Componentes da página /posso-comprar
+├── contexts/                Contextos React (ThemeContext)
+├── hooks/                   useAuth, useBalance, useExpenses, useInstallments, useFinancial,
+│                            useUser, useShortcuts
+├── layouts/                 AppLayout, AuthLayout, Sidebar, Navbar, config de navegação
+├── lib/                     api.ts (instância do axios, ApiError, handler de 401), utils.ts
+├── pages/                   Componentes de rota (todos lazy, exceto Login/Register)
+├── routes/                  AppRouter (React.lazy + Suspense)
+├── services/                Clientes tipados da API (auth, user, balance, expense,
+│                            installment, financial)
+├── stores/                  Stores Zustand (authStore com persistência em localStorage)
+├── styles/                  globals.css + tokens do Tailwind
+├── types/                   Tipos compartilhados (api, auth, user, expense, balance,
+│                            installment, financial)
+├── utils/                   formatCurrency / formatPercentage (pt-BR + BRL)
+├── App.tsx                  Providers + GlobalChrome (barra de progresso, atalhos)
+└── main.tsx                 Entry point do React
 ```
 
-### Data flow
+### Fluxo de dados
 
 ```
-Page  ──►  service (typed HTTP call)  ──►  axios instance (lib/api.ts)
-                                              │
-                                              ├─ request interceptor: injects Bearer token
-                                              └─ response interceptor: normalizes errors,
-                                                 clears auth on 401, throws ApiError
+Página  ──►  hook (useQuery / useMutation)  ──►  service (chamada tipada)  ──►  axios
+                       │                                                          │
+                       ▼                                                          ▼
+        Cache do React Query (invalidações                request: injeta o JWT
+        propagam entre páginas — ex: criar                response: vira ApiError;
+        parcelamento atualiza /financial)                 401 → limpa store, vai pra /login
 ```
 
-Routes are declared in `src/routes/AppRouter.tsx`:
+### Performance
 
-- `<PublicOnlyRoute>` wraps `/login` and `/register` — sends authenticated users back to wherever they came from (or `/dashboard`).
-- `<ProtectedRoute>` wraps everything inside `<AppLayout>` — renders a neutral loading state until the auth store has hydrated, then redirects unauthenticated users to `/login` and remembers their destination via `location.state.from`.
+- **Lazy loading por rota.** `AppRouter` faz `React.lazy()` em todas as páginas internas;
+  o Suspense em `AppLayout` mostra um skeleton (`PageFallback`) enquanto carrega.
+- **Chunking manual** em `vite.config.ts` separa libs pesadas (`react`, `query`, `forms`,
+  `radix`, `charts`, `icons`). A tela de login não baixa nada de `charts`.
+- **Cache de assets longo.** O nginx serve `/assets/*` com `Cache-Control: public, immutable`
+  e 1 ano de expiração. `index.html` fica sem cache para que deploys apareçam na hora.
+- **Gzip no edge.** O nginx comprime JS/CSS/SVG/JSON.
 
-### Auth lifecycle
+### UX e acessibilidade
 
-1. **Login/register** → `authService` posts to `/api/v1/auth/{login,register}` → token saved to `tokenStorage` (localStorage) and to the Zustand store.
-2. **Bootstrap (on every reload)** → `useAuth` calls `userService.me()` to validate the persisted token. On success the user is hydrated; on any error the store is cleared.
-3. **401 from any request** → axios response interceptor calls `tokenStorage.clear()` and notifies the store, which propagates to `<ProtectedRoute>` → redirect to `/login`.
-4. **Logout** → store clears state and removes the token.
+| Concern | Implementação |
+| --- | --- |
+| Indicador de carregamento | `<TopProgress />` lê `useIsFetching()` + `useIsMutating()` e mostra uma barra fina animada. |
+| Erros de render | `<ErrorBoundary />` envolve a shell e o slot da página; em dev mostra o erro, em prod mostra card neutro. |
+| Erros do servidor | Interceptor do axios → `ApiError` → `toast.error(message)`. Reads do React Query podem usar `<QueryErrorState />` inline com botão de retry. |
+| Loading | Skeletons em todas as listas/gráficos; `<PageFallback />` em transições de rota. |
+| Empty states | `<EmptyState />` em qualquer lista que possa estar vazia. |
+| Temas | `ThemeContext` (claro/escuro) reflete no `html.dark` e persiste em `localStorage`. Um script inline no `index.html` aplica o tema **antes** do React montar (evita FOUC). |
+| A11y | Skip-to-content no `AppLayout`, ring de foco visível, `aria-busy` no fallback, `role="alert"` em erros, `aria-pressed` em toggles, landmarks semânticos, ícones com label. |
+| Atalhos | Hook `useShortcuts()` + diálogo `?`. `⌘K` busca rápida, `⌘/` alterna tema, `g d/g/p/c/s` para navegar. |
 
-### Theming
+### Rotas e auth
 
-`ThemeContext` exposes `theme` / `setTheme` / `toggleTheme`. The chosen theme is mirrored to the `dark` class on `<html>` and persisted to `localStorage`. A small inline script in `index.html` applies the persisted theme **before** React mounts, eliminating the dark-mode flash on reload.
+- `<PublicOnlyRoute>` cobre `/login` e `/cadastro` — usuário logado vai pro destino original (ou `/painel`).
+- `<ProtectedRoute>` cobre tudo dentro de `<AppLayout>` — espera o store hidratar antes de
+  decidir, e redireciona quem não está autenticado para `/login` salvando o destino em
+  `location.state.from`.
 
-### Styling
+Ciclo do auth:
 
-- shadcn/ui design tokens live in `src/styles/globals.css` — change the HSL variables to re-skin the app.
-- Tailwind config in `tailwind.config.js` exposes those tokens as Tailwind colors (`bg-primary`, `text-muted-foreground`, etc.).
-- All shadcn components are colocated under `src/components/ui/` and edit-friendly (no opaque black-box dependencies).
+1. **Login/cadastro** → `authService` → token salvo em `tokenStorage` (localStorage) + Zustand.
+2. **Boot** → `useAuth` chama `userService.me()` pra validar o token persistido. Em qualquer erro,
+   limpa o store.
+3. **401 em qualquer request** → interceptor do axios limpa o token, store propaga, e o usuário
+   é mandado pra `/login`.
+4. **Logout** → store limpa estado, token apagado.
+
+### Estilização
+
+- Tokens de design em `src/styles/globals.css` (variáveis HSL). Pra mudar a paleta, edita lá.
+- Tailwind expõe esses tokens como cores (`bg-primary`, `text-muted-foreground`, …).
+- Keyframes customizados (`fade-in`, `scale-in`, `slide-up`, `pulse-ring`, `progress-grow`)
+  ficam em `tailwind.config.js`.
 
 ---
 
-## Environment variables
+## Variáveis de ambiente
 
-| variable        | purpose | default |
+| variável        | propósito | padrão |
 | --------------- | --- | --- |
-| `VITE_API_URL`  | When set, the bundle prefixes API calls with this origin (`${VITE_API_URL}/api/v1`). Leave empty to use **same-origin** `/api/v1` (recommended behind nginx/Compose). | unset |
+| `VITE_API_URL`  | Se setado, o bundle prefixa as chamadas com este origin (`${VITE_API_URL}/api/v1`). Deixe vazio para usar **same-origin** `/api/v1` (recomendado por trás do nginx). | vazio |
 
-Vars must be prefixed with `VITE_` to be exposed to the client bundle. They're embedded at build time, so changing them requires rebuilding.
+Variáveis precisam ter o prefixo `VITE_` para serem expostas ao bundle. Elas são embutidas
+em build time, então mudar exige rebuild.
 
 ---
 
-## Integration with the backend
+## Integração com o backend
 
-- All API calls go through `src/lib/api.ts`. There is **no mock data** in the project; every fetch hits the real FastAPI backend.
-- The expected error shape mirrors the backend's `error_handler` middleware:
+- Todas as chamadas passam por `src/lib/api.ts`. Não tem mock de dado nenhum no projeto;
+  toda chamada vai pro backend real.
+- O formato de erro segue o middleware `error_handler` do backend:
   ```json
   { "error": { "message": "...", "details": [...] } }
   ```
-  The interceptor translates that into an `ApiError` with `.message`, `.status`, and `.details`, ready for `instanceof ApiError` checks at the call site.
-- Endpoints used so far:
-  - `POST /api/v1/auth/register`
-  - `POST /api/v1/auth/login`
-  - `GET /api/v1/users/me`
-  - `PATCH /api/v1/users/me` (typed but not yet wired to a page)
+  O interceptor transforma isso em `ApiError` com `.message`, `.status` e `.details`,
+  prontos pra `instanceof ApiError` no call site.
+- Endpoints consumidos hoje:
+  - `POST /auth/{register,login}`
+  - `GET/PATCH /users/me`
+  - `GET /balance`, `GET /balance/monthly`
+  - `GET/POST/PATCH/DELETE /expenses`
+  - `GET/POST/PUT/DELETE /installments`
+  - `GET /financial/month-summary`, `GET /financial/future-balance`
+  - `POST /financial-analysis/can-i-buy`
+
+> Observação: as URLs da API ficaram em inglês de propósito para preservar os testes do
+> backend. As **rotas do browser** (o que aparece na barra de endereço) estão em português
+> (`/painel`, `/gastos`, etc.).
 
 ---
 
-## Adding a new page
+## Adicionando uma página nova
 
-1. Create `src/pages/MyPage.tsx`.
-2. Register the route inside `<AppRouter>` (under `<ProtectedRoute>` if it should require auth).
-3. Add an entry to `src/layouts/nav.ts` so the sidebar shows it (drop `disabled: true` once you're done).
-4. If the page calls a new endpoint, add a typed function to `src/services/<resource>.service.ts` and consume it via React Query inside the page.
+1. Crie `src/pages/MinhaPage.tsx`.
+2. Adicione um `React.lazy(() => import(...))` em `src/routes/AppRouter.tsx` e a linha da `<Route>`.
+3. Coloque uma entrada em `src/layouts/nav.ts` para aparecer na sidebar.
+4. Se for chamar um endpoint novo, adiciona a função tipada em `src/services/<recurso>.service.ts`
+   e consome via hook do React Query em `src/hooks/`.
+
+Suspense e ErrorBoundary já são globais, então chunk lazy e erro de render são tratados
+automaticamente.
 
 ---
 
-## Roadmap (next phases)
+## Build de produção
 
-- Expenses page (CRUD + CSV import via existing backend endpoint)
-- Installments tracking page
-- Financial planning views (month summary, future balance projection)
-- Purchase analysis ("Can I buy?") form
-- Discipline Mode dashboard
-- Component-level tests (Vitest + Testing Library)
+`npm run build` gera o `dist/`. Com lazy loading + chunking manual:
+
+| chunk | papel | gzipado |
+| --- | --- | --- |
+| `react` | react / react-dom / router | ~54 KB |
+| `index` | shell + páginas de auth | ~44 KB |
+| `radix` | dialog/dropdown/select | ~34 KB |
+| `forms` | react-hook-form + zod | ~22 KB |
+| `query` | tanstack/zustand | ~14 KB |
+| `charts` | recharts (lazy no painel/parcelamentos/posso-comprar) | ~119 KB |
+| por página | cada rota | 2–6 KB |
+
+A tela de login baixa ~165 KB gzipado — **sem nenhum gráfico**.

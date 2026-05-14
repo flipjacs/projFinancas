@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     )
 
     # ---- App ----
-    app_name: str = Field(default="Personal Financial Planning System")
+    app_name: str = Field(default="Financeiro")
     app_env: Literal["development", "staging", "production", "test"] = Field(
         default="development"
     )

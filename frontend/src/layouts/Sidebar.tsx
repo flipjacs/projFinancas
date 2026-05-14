@@ -34,7 +34,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </span>
           <div className="leading-tight">
             <p className="text-sm font-semibold">Financeiro</p>
-            <p className="text-xs text-muted-foreground">Personal planning</p>
+            <p className="text-xs text-muted-foreground">Finanças pessoais</p>
           </div>
         </div>
 
@@ -48,12 +48,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   className={cn(
                     "flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground/70",
                   )}
-                  title="Coming soon"
+                  title="Em breve"
                 >
                   <Icon className="h-4 w-4" />
                   <span>{item.label}</span>
                   <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
-                    Soon
+                    Em breve
                   </span>
                 </div>
               );
@@ -80,7 +80,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         <div className="border-t p-4 text-xs text-muted-foreground">
-          <p>v0.1 · Foundation</p>
+          <p>v0.1 · Projeto pessoal</p>
         </div>
       </aside>
     </>

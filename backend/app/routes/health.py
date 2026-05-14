@@ -1,9 +1,9 @@
-"""Health endpoints.
+"""Endpoints de saúde.
 
-`/health` is a cheap liveness probe — returns 200 if the process is up.
-`/health/ready` is the readiness probe — also pings the database. A failed
-DB ping flips the response to 503 so orchestrators can pull the pod out
-of rotation without restarting it.
+`/health` é um liveness probe simples — retorna 200 se o processo subiu.
+`/health/ready` é o readiness probe — ele também faz ping no banco.
+Se o ping no banco falha, devolvemos 503 para o orquestrador (Docker/K8s)
+tirar a instância da rotação sem precisar reiniciar.
 """
 import logging
 from typing import Literal
@@ -18,7 +18,7 @@ from app.database.session import get_db
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["health"])
+router = APIRouter(tags=["saúde"])
 
 
 class HealthResponse(BaseModel):

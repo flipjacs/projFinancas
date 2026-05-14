@@ -1,4 +1,5 @@
 import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
   Table,
@@ -28,7 +29,7 @@ interface Props {
   loading?: boolean;
   onEdit: (expense: Expense) => void;
   onDelete: (expense: Expense) => void;
-  /** Shown when no expenses match the active filters. */
+  /** Mensagem mostrada quando nenhum gasto bate com o filtro atual. */
   emptyHint?: string;
 }
 
@@ -56,9 +57,9 @@ export function ExpenseTable({
     return (
       <EmptyState
         icon={Receipt}
-        title="No expenses to show"
+        title="Nenhum gasto por aqui"
         description={
-          emptyHint ?? "Add your first expense to start tracking your spending."
+          emptyHint ?? "Adicione seu primeiro gasto para começar a acompanhar."
         }
       />
     );
@@ -69,12 +70,12 @@ export function ExpenseTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Recurring</TableHead>
-            <TableHead className="w-12 sr-only">Actions</TableHead>
+            <TableHead>Descrição</TableHead>
+            <TableHead>Categoria</TableHead>
+            <TableHead className="text-right">Valor</TableHead>
+            <TableHead>Data</TableHead>
+            <TableHead>Fixo</TableHead>
+            <TableHead className="w-12 sr-only">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -92,11 +93,13 @@ export function ExpenseTable({
                     {formatCurrency(expense.amount)}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {format(parseISO(expense.created_at), "MMM d, yyyy")}
+                    {format(parseISO(expense.created_at), "d 'de' MMM',' yyyy", {
+                      locale: ptBR,
+                    })}
                   </TableCell>
                   <TableCell>
                     {expense.recurring ? (
-                      <Badge variant="secondary">Recurring</Badge>
+                      <Badge variant="secondary">Fixo</Badge>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
@@ -107,7 +110,7 @@ export function ExpenseTable({
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label={`Actions for ${expense.title}`}
+                          aria-label={`Ações de ${expense.title}`}
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -115,14 +118,14 @@ export function ExpenseTable({
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => onEdit(expense)}>
                           <Pencil className="h-4 w-4" />
-                          Edit
+                          Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => onDelete(expense)}
                           className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
-                          Delete
+                          Excluir
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

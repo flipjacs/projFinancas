@@ -19,7 +19,7 @@ export const expenseKeys = {
     [...expenseKeys.all, "list", params] as const satisfies QueryKey,
 };
 
-/** Server-state read for the expense list. */
+// Hook de leitura da lista de gastos.
 export function useExpenses(params: ExpenseListParams = {}) {
   return useQuery({
     queryKey: expenseKeys.list(params),
@@ -28,8 +28,8 @@ export function useExpenses(params: ExpenseListParams = {}) {
 }
 
 /**
- * Bundled mutations so call sites don't have to duplicate the
- * cache-invalidation + toast plumbing for each verb.
+ * Junta as mutations de criar/editar/excluir num só hook para que as
+ * páginas não precisem duplicar a invalidação de cache + toasts.
  */
 export function useExpenseMutations() {
   const qc = useQueryClient();
@@ -44,7 +44,7 @@ export function useExpenseMutations() {
       const message =
         error instanceof ApiError
           ? error.message
-          : `Failed to ${action} expense.`;
+          : `Falha ao ${action} o gasto.`;
       toast.error(message);
     };
   }
@@ -52,29 +52,29 @@ export function useExpenseMutations() {
   const create = useMutation({
     mutationFn: (payload: ExpenseCreate) => expenseService.create(payload),
     onSuccess: () => {
-      toast.success("Expense added.");
+      toast.success("Gasto adicionado.");
       invalidateAll();
     },
-    onError: reportError("create"),
+    onError: reportError("criar"),
   });
 
   const update = useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: ExpenseUpdate }) =>
       expenseService.update(id, payload),
     onSuccess: () => {
-      toast.success("Expense updated.");
+      toast.success("Gasto atualizado.");
       invalidateAll();
     },
-    onError: reportError("update"),
+    onError: reportError("atualizar"),
   });
 
   const remove = useMutation({
     mutationFn: (id: number) => expenseService.remove(id),
     onSuccess: () => {
-      toast.success("Expense deleted.");
+      toast.success("Gasto excluído.");
       invalidateAll();
     },
-    onError: reportError("delete"),
+    onError: reportError("excluir"),
   });
 
   return { create, update, remove };

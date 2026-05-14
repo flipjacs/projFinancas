@@ -5,6 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CATEGORY_LABELS } from "@/components/CategoryBadge";
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/types/expense";
 
 export const ALL_CATEGORIES = "__all__";
@@ -23,17 +24,13 @@ export function CategoryFilter({ value, onChange }: Props) {
       }
     >
       <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="All categories" />
+        <SelectValue placeholder="Todas as categorias" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={ALL_CATEGORIES}>All categories</SelectItem>
+        <SelectItem value={ALL_CATEGORIES}>Todas as categorias</SelectItem>
         {EXPENSE_CATEGORIES.map((category) => (
-          <SelectItem
-            key={category}
-            value={category}
-            className="capitalize"
-          >
-            {category}
+          <SelectItem key={category} value={category}>
+            {CATEGORY_LABELS[category]}
           </SelectItem>
         ))}
       </SelectContent>

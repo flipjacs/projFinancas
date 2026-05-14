@@ -22,17 +22,17 @@ interface Props {
 
 const MONTH_SHORT = [
   "Jan",
-  "Feb",
+  "Fev",
   "Mar",
-  "Apr",
-  "May",
+  "Abr",
+  "Mai",
   "Jun",
   "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
+  "Ago",
+  "Set",
+  "Out",
   "Nov",
-  "Dec",
+  "Dez",
 ];
 
 export function MonthlySpendingChart({ periods, summaries }: Props) {
@@ -50,8 +50,8 @@ export function MonthlySpendingChart({ periods, summaries }: Props) {
     return (
       <EmptyState
         icon={BarChart3}
-        title="Not enough history yet"
-        description="Spending trends will appear once you have a few months of data."
+        title="Histórico insuficiente"
+        description="As tendências aparecem quando você tiver alguns meses de dados."
       />
     );
   }
@@ -90,7 +90,7 @@ export function MonthlySpendingChart({ periods, summaries }: Props) {
               fontSize: 12,
               color: "hsl(var(--popover-foreground))",
             }}
-            formatter={(value) => [formatCurrency(Number(value)), "Spent"]}
+            formatter={(value) => [formatCurrency(Number(value)), "Gasto"]}
           />
           <Bar dataKey="total" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
         </BarChart>

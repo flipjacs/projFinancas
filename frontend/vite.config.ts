@@ -14,6 +14,33 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    build: {
+      target: "es2020",
+      sourcemap: false,
+      // Heavy libs get their own chunks so the initial route only pays for what
+      // it actually renders. Recharts (~250KB) and Radix live behind feature
+      // pages, not the auth screens.
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            react: ["react", "react-dom", "react-router-dom"],
+            query: ["@tanstack/react-query", "zustand"],
+            forms: ["react-hook-form", "@hookform/resolvers", "zod"],
+            charts: ["recharts"],
+            radix: [
+              "@radix-ui/react-dialog",
+              "@radix-ui/react-dropdown-menu",
+              "@radix-ui/react-label",
+              "@radix-ui/react-select",
+              "@radix-ui/react-separator",
+              "@radix-ui/react-slot",
+            ],
+            icons: ["lucide-react"],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 700,
+    },
     server: {
       host: true,
       port: 5173,

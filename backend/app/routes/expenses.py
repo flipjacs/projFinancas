@@ -26,7 +26,7 @@ from app.services.expense_service import ExpenseService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/expenses", tags=["expenses"])
+router = APIRouter(prefix="/expenses", tags=["gastos"])
 
 
 def _audit_csv_import(user_id: int, result: CSVImportResult) -> None:
@@ -93,11 +93,11 @@ def delete_expense(
 @router.post(
     "/import-csv",
     response_model=CSVImportResult,
-    summary="Bulk-import expenses from a CSV file",
+    summary="Importar gastos em lote a partir de um CSV",
     description=(
-        "Uploads a UTF-8 CSV with headers `title,amount,category,recurring`. "
-        "Each row is validated independently — invalid rows are reported back "
-        "without aborting the import."
+        "Recebe um CSV em UTF-8 com as colunas `title,amount,category,recurring`. "
+        "Cada linha é validada de forma independente — linhas inválidas são "
+        "reportadas no resultado sem abortar a importação."
     ),
 )
 def import_expenses_csv(
@@ -114,7 +114,7 @@ def import_expenses_csv(
     }:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail=f"Unsupported content type: {file.content_type}",
+            detail=f"Tipo de arquivo não suportado: {file.content_type}",
         )
     content = file.file.read()
     try:

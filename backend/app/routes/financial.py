@@ -7,7 +7,7 @@ from app.models.user import User
 from app.schemas.financial import FutureBalanceResponse, MonthSummary
 from app.services.financial_service import FinancialService
 
-router = APIRouter(prefix="/financial", tags=["financial"])
+router = APIRouter(prefix="/financial", tags=["financeiro"])
 
 
 @router.get("/month-summary", response_model=MonthSummary)

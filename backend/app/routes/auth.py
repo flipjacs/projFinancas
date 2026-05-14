@@ -8,14 +8,14 @@ from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 from app.schemas.user import UserResponse
 from app.services.auth_service import AuthService
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["autenticação"])
 
 
 @router.post(
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Register a new user",
+    summary="Cadastrar um novo usuário",
 )
 @auth_limit()
 def register(
@@ -30,7 +30,7 @@ def register(
 @router.post(
     "/login",
     response_model=TokenResponse,
-    summary="Authenticate and receive a JWT access token",
+    summary="Fazer login e receber um token JWT",
 )
 @auth_limit()
 def login(

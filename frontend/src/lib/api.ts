@@ -3,11 +3,9 @@ import { ApiError, type ApiErrorBody } from "@/types/api";
 
 const TOKEN_STORAGE_KEY = "fp:token";
 
-/**
- * Token I/O is colocated here (rather than in the auth store) so the axios
- * interceptor can read the token without importing React-bound code, and the
- * store can stay a pure state container.
- */
+// O acesso ao token fica aqui (e não no store) para que o interceptor do
+// axios consiga ler sem importar código que depende do React. Assim, o
+// store continua sendo só um container de estado.
 export const tokenStorage = {
   get(): string | null {
     try {
@@ -42,7 +40,7 @@ export const api: AxiosInstance = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// ---- Request interceptor: inject JWT ----
+// ---- Interceptor de request: injeta o JWT ----
 api.interceptors.request.use((config) => {
   const token = tokenStorage.get();
   if (token) {
@@ -51,14 +49,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ---- Response interceptor: normalize errors, handle 401 ----
+// ---- Interceptor de response: normaliza erros e trata 401 ----
 type UnauthorizedHandler = () => void;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
 
-/**
- * Lets the auth store register a callback to clear state when the API
- * returns 401. Avoids a circular import between api.ts and the store.
- */
+// Deixa o auth store registrar um callback para limpar o estado quando a
+// API devolve 401. Evita um import circular entre api.ts e o store.
 export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): void {
   unauthorizedHandler = handler;
 }
@@ -77,7 +73,7 @@ api.interceptors.response.use(
     const message =
       body?.error?.message ??
       error.message ??
-      "Unexpected error contacting the server.";
+      "Erro inesperado ao contactar o servidor.";
     return Promise.reject(new ApiError(message, status, body?.error?.details));
   },
 );

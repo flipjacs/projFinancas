@@ -158,7 +158,7 @@ def test_can_i_buy_medium_risk_with_existing_load(
     assert float(body["new_installment_value"]) == 350.00
     assert float(body["monthly_impact_percentage"]) == 27.00
     assert float(body["remaining_balance_after_purchase"]) == 3650.00
-    assert "acceptable" in body["recommendation"].lower()
+    assert "viável" in body["recommendation"].lower()
 
 
 def test_can_i_buy_high_risk_rejected(
@@ -173,8 +173,8 @@ def test_can_i_buy_high_risk_rejected(
     body = response.json()
     assert body["risk_level"] == "high"
     assert body["approved"] is False
-    assert "not recommended" in body["recommendation"].lower()
-    assert any("high-risk" in w for w in body["warnings"])
+    assert "não é uma boa hora" in body["recommendation"].lower()
+    assert any("risco alto" in w.lower() for w in body["warnings"])
 
 
 def test_can_i_buy_negative_remaining_warns_and_rejects(
@@ -188,8 +188,8 @@ def test_can_i_buy_negative_remaining_warns_and_rejects(
     body = response.json()
     assert body["approved"] is False
     assert float(body["remaining_balance_after_purchase"]) < 0
-    assert any("negative" in w for w in body["warnings"])
-    assert any("exceed your monthly salary" in w for w in body["warnings"])
+    assert any("negativo" in w.lower() for w in body["warnings"])
+    assert any("passa do seu salário" in w.lower() for w in body["warnings"])
 
 
 def test_can_i_buy_returns_safe_suggestions_when_high_risk(

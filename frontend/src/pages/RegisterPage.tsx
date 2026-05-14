@@ -18,15 +18,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { ApiError } from "@/types/api";
 
 const registerSchema = z.object({
-  name: z.string().min(1, "Name is required").max(120),
-  email: z.string().email("Enter a valid email address"),
+  name: z.string().min(1, "Nome é obrigatório").max(120),
+  email: z.string().email("Informe um email válido"),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(128, "Password is too long"),
+    .min(8, "A senha precisa ter pelo menos 8 caracteres")
+    .max(128, "Senha muito longa"),
   monthly_salary: z.coerce
-    .number({ invalid_type_error: "Salary must be a number" })
-    .min(0, "Salary cannot be negative"),
+    .number({ invalid_type_error: "Salário precisa ser um número" })
+    .min(0, "Salário não pode ser negativo"),
 });
 
 type RegisterValues = z.infer<typeof registerSchema>;
@@ -49,10 +49,10 @@ export function RegisterPage() {
     setServerError(null);
     try {
       await registerAccount(values);
-      navigate("/dashboard", { replace: true });
+      navigate("/painel", { replace: true });
     } catch (err) {
       const message =
-        err instanceof ApiError ? err.message : "Unable to create account.";
+        err instanceof ApiError ? err.message : "Não foi possível criar a conta.";
       setServerError(message);
     }
   }
@@ -60,13 +60,15 @@ export function RegisterPage() {
   return (
     <Card>
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl">Create your account</CardTitle>
-        <CardDescription>Start tracking your finances in seconds.</CardDescription>
+        <CardTitle className="text-2xl">Crie sua conta</CardTitle>
+        <CardDescription>
+          Comece a acompanhar suas finanças em poucos segundos.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">Nome</Label>
             <Input id="name" autoComplete="name" {...register("name")} />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
@@ -79,7 +81,7 @@ export function RegisterPage() {
               id="email"
               type="email"
               autoComplete="email"
-              placeholder="you@example.com"
+              placeholder="voce@exemplo.com"
               {...register("email")}
             />
             {errors.email && (
@@ -88,7 +90,7 @@ export function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Senha</Label>
             <Input
               id="password"
               type="password"
@@ -103,7 +105,7 @@ export function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="monthly_salary">Monthly salary</Label>
+            <Label htmlFor="monthly_salary">Salário mensal</Label>
             <Input
               id="monthly_salary"
               type="number"
@@ -130,13 +132,13 @@ export function RegisterPage() {
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Create account
+            Criar conta
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
+            Já tem uma conta?{" "}
             <Link to="/login" className="font-medium text-primary hover:underline">
-              Sign in
+              Entrar
             </Link>
           </p>
         </form>

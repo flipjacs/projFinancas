@@ -26,7 +26,7 @@ class InstallmentService:
         if installment is None or installment.user_id != user_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Installment not found",
+                detail="Parcelamento não encontrado",
             )
         return installment
 
@@ -64,7 +64,7 @@ class InstallmentService:
         if new_remaining > new_total:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="remaining_installments cannot exceed total_installments",
+                detail="Parcelas restantes não podem ser maiores que o total",
             )
 
         return self.installments.update(

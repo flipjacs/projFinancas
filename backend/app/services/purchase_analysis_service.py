@@ -25,8 +25,8 @@ from app.services.financial_calculations import (
 
 class PurchaseAnalysisService:
     """
-    Evaluates the financial impact of a hypothetical installment purchase
-    against the user's salary, recurring expenses and current installments.
+    Avalia o impacto financeiro de uma compra parcelada hipotética em
+    relação ao salário, gastos fixos e parcelamentos atuais do usuário.
     """
 
     def __init__(self, db: Session) -> None:

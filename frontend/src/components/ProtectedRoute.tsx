@@ -2,11 +2,12 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 /**
- * Gate for routes that require an authenticated user.
- * - While the auth store is hydrating from localStorage we render a neutral
- *   placeholder so we don't flash the login page on every reload.
- * - When unauthenticated, we redirect to /login and remember where the user
- *   was trying to go via location state.
+ * Guarda das rotas que exigem usuário autenticado.
+ * - Enquanto o estado de auth ainda está hidratando do localStorage,
+ *   mostramos um placeholder neutro para não dar "flash" da tela de
+ *   login a cada reload.
+ * - Quando não autenticado, redirecionamos para /login e guardamos
+ *   o destino original em location.state.
  */
 export function ProtectedRoute() {
   const { isAuthenticated, hydrated } = useAuth();
@@ -15,7 +16,7 @@ export function ProtectedRoute() {
   if (!hydrated) {
     return (
       <div className="flex h-screen items-center justify-center text-muted-foreground">
-        Loading…
+        Carregando…
       </div>
     );
   }

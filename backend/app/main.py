@@ -10,27 +10,27 @@ from app.routes.health import router as health_router
 from app.core.logging import configure_logging
 
 OPENAPI_TAGS_METADATA = [
-    {"name": "auth", "description": "Account registration and JWT login."},
-    {"name": "users", "description": "Current-user profile management."},
-    {"name": "expenses", "description": "Expense CRUD and CSV bulk import."},
-    {"name": "balance", "description": "Monthly balance and per-category summary."},
+    {"name": "autenticação", "description": "Cadastro de conta e login JWT."},
+    {"name": "usuários", "description": "Gerenciamento do perfil do usuário logado."},
+    {"name": "gastos", "description": "CRUD de gastos e importação em lote via CSV."},
+    {"name": "saldo", "description": "Saldo mensal e resumo por categoria."},
     {
-        "name": "installments",
-        "description": "Track installment purchases and remaining commitments.",
+        "name": "parcelamentos",
+        "description": "Compras parceladas e parcelas restantes.",
     },
     {
-        "name": "financial",
-        "description": "Aggregate planning: monthly summary and future balance projections.",
+        "name": "financeiro",
+        "description": "Planejamento agregado: resumo do mês e projeção de saldo.",
     },
     {
-        "name": "financial-analysis",
-        "description": "Pre-purchase risk analysis (`can-i-buy`) and recommendations.",
+        "name": "análise financeira",
+        "description": "Análise de risco antes da compra (`can-i-buy`) e recomendações.",
     },
     {
-        "name": "discipline",
-        "description": "Discipline Mode: spend caps, score, streaks, and warnings.",
+        "name": "disciplina",
+        "description": "Modo Disciplina: limites de gasto, pontuação, sequências e avisos.",
     },
-    {"name": "health", "description": "Liveness and readiness probes."},
+    {"name": "saúde", "description": "Probes de liveness e readiness."},
 ]
 
 
@@ -43,13 +43,14 @@ def create_app() -> FastAPI:
         version="1.0.0",
         openapi_tags=OPENAPI_TAGS_METADATA,
         description=(
-            "Backend for a personal financial planning system. "
-            "All business endpoints live under `/api/v1`."
+            "Backend de um sistema de planejamento financeiro pessoal. "
+            "Todos os endpoints ficam sob `/api/v1`."
         ),
     )
 
-    # Order matters: request logger first so failures inside other middleware
-    # are still captured. Rate limit and CORS go after.
+    # A ordem importa: o logger de request fica no começo para que erros
+    # nos outros middlewares também sejam capturados. Rate limit e CORS
+    # vêm depois.
     app.add_middleware(RequestLoggingMiddleware)
     install_rate_limiting(app)
     app.add_middleware(

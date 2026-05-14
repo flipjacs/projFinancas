@@ -21,13 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CATEGORY_LABELS } from "@/components/CategoryBadge";
 import { EXPENSE_CATEGORIES, type Expense } from "@/types/expense";
 
 const schema = z.object({
-  title: z.string().min(1, "Title is required").max(180),
+  title: z.string().min(1, "Descrição é obrigatória").max(180),
   amount: z.coerce
-    .number({ invalid_type_error: "Amount must be a number" })
-    .min(0, "Amount cannot be negative"),
+    .number({ invalid_type_error: "Valor precisa ser um número" })
+    .min(0, "Valor não pode ser negativo"),
   category: z.enum(EXPENSE_CATEGORIES),
   recurring: z.boolean(),
 });
@@ -37,7 +38,7 @@ export type ExpenseFormValues = z.infer<typeof schema>;
 interface ExpenseFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** When provided, the dialog runs in edit mode and pre-fills the form. */
+  /** Quando passado, o diálogo entra em modo de edição. */
   expense?: Expense | null;
   onSubmit: (values: ExpenseFormValues) => Promise<void> | void;
   submitting?: boolean;
@@ -64,8 +65,8 @@ export function ExpenseFormDialog({
     defaultValues: DEFAULT_VALUES,
   });
 
-  // Reset whenever the dialog re-opens — prevents stale values bleeding from
-  // a previous edit/create cycle.
+  // Reseta os valores sempre que o diálogo reabre — evita que dados
+  // antigos vazem entre um ciclo de edição e outro.
   useEffect(() => {
     if (!open) return;
     if (expense) {
@@ -88,11 +89,11 @@ export function ExpenseFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit expense" : "New expense"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar gasto" : "Novo gasto"}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update the details of this expense."
-              : "Add a new expense to your monthly tracker."}
+              ? "Atualize os dados deste gasto."
+              : "Adicione um novo gasto ao seu controle mensal."}
           </DialogDescription>
         </DialogHeader>
 
@@ -102,11 +103,11 @@ export function ExpenseFormDialog({
           noValidate
         >
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">Descrição</Label>
             <Input
               id="title"
               autoFocus
-              placeholder="e.g. Groceries"
+              placeholder="ex.: Mercado"
               {...form.register("title")}
             />
             {form.formState.errors.title && (
@@ -118,7 +119,7 @@ export function ExpenseFormDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount">Valor</Label>
               <Input
                 id="amount"
                 type="number"
@@ -135,7 +136,7 @@ export function ExpenseFormDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">Categoria</Label>
               <Select
                 value={form.watch("category")}
                 onValueChange={(value) =>
@@ -145,16 +146,12 @@ export function ExpenseFormDialog({
                 }
               >
                 <SelectTrigger id="category">
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder="Escolha uma categoria" />
                 </SelectTrigger>
                 <SelectContent>
                   {EXPENSE_CATEGORIES.map((category) => (
-                    <SelectItem
-                      key={category}
-                      value={category}
-                      className="capitalize"
-                    >
-                      {category}
+                    <SelectItem key={category} value={category}>
+                      {CATEGORY_LABELS[category]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -173,9 +170,9 @@ export function ExpenseFormDialog({
               className="h-4 w-4 rounded border-input"
               {...form.register("recurring")}
             />
-            <span className="font-medium">Recurring</span>
+            <span className="font-medium">Gasto fixo</span>
             <span className="ml-auto text-xs text-muted-foreground">
-              Counts towards your monthly fixed costs
+              Conta como custo fixo mensal
             </span>
           </label>
 
@@ -186,11 +183,11 @@ export function ExpenseFormDialog({
               onClick={() => onOpenChange(false)}
               disabled={submitting}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isEdit ? "Save changes" : "Add expense"}
+              {isEdit ? "Salvar alterações" : "Adicionar gasto"}
             </Button>
           </DialogFooter>
         </form>

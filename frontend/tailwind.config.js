@@ -64,11 +64,32 @@ export default {
           "0%": { opacity: "0", transform: "translateY(4px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.96)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "slide-up": {
+          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "progress-grow": {
+          "0%": { width: "0%" },
+          "100%": { width: "var(--progress-target, 100%)" },
+        },
+        "pulse-ring": {
+          "0%": { transform: "scale(0.85)", opacity: "0.7" },
+          "70%": { transform: "scale(1.15)", opacity: "0" },
+          "100%": { transform: "scale(1.15)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.2s ease-out",
+        "scale-in": "scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+        "slide-up": "slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+        "progress-grow": "progress-grow 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "pulse-ring": "pulse-ring 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite",
       },
     },
   },

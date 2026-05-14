@@ -7,7 +7,7 @@ from app.models.user import User
 from app.schemas.financial import CanIBuyRequest, CanIBuyResponse
 from app.services.purchase_analysis_service import PurchaseAnalysisService
 
-router = APIRouter(prefix="/financial-analysis", tags=["financial-analysis"])
+router = APIRouter(prefix="/financial-analysis", tags=["análise financeira"])
 
 
 @router.post("/can-i-buy", response_model=CanIBuyResponse)

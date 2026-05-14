@@ -11,7 +11,7 @@ from app.schemas.installment import (
 )
 from app.services.installment_service import InstallmentService
 
-router = APIRouter(prefix="/installments", tags=["installments"])
+router = APIRouter(prefix="/installments", tags=["parcelamentos"])
 
 
 @router.get("", response_model=list[InstallmentResponse])

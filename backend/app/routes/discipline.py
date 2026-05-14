@@ -12,7 +12,7 @@ from app.schemas.discipline import (
 )
 from app.services.discipline_service import DisciplineService
 
-router = APIRouter(prefix="/discipline", tags=["discipline"])
+router = APIRouter(prefix="/discipline", tags=["disciplina"])
 
 
 @router.get("/status", response_model=DisciplineStatusResponse)

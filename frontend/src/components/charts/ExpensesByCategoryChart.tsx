@@ -7,7 +7,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { CATEGORY_COLORS } from "@/components/CategoryBadge";
+import { CATEGORY_COLORS, CATEGORY_LABELS } from "@/components/CategoryBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { PieChart as PieIcon } from "lucide-react";
 import type { CategoryTotal } from "@/types/balance";
@@ -23,7 +23,9 @@ export function ExpensesByCategoryChart({ data }: Props) {
     () =>
       data
         .map((row) => ({
-          name: row.category,
+          name:
+            CATEGORY_LABELS[row.category as ExpenseCategory] ?? row.category,
+          rawCategory: row.category,
           value: Number(row.total),
         }))
         .filter((row) => row.value > 0)
@@ -35,8 +37,8 @@ export function ExpensesByCategoryChart({ data }: Props) {
     return (
       <EmptyState
         icon={PieIcon}
-        title="No spending yet this month"
-        description="Add an expense to see your category breakdown."
+        title="Nenhum gasto neste mês ainda"
+        description="Adicione um gasto para ver a divisão por categoria."
       />
     );
   }
@@ -56,9 +58,9 @@ export function ExpensesByCategoryChart({ data }: Props) {
           >
             {chartData.map((entry) => (
               <Cell
-                key={entry.name}
+                key={entry.rawCategory}
                 fill={
-                  CATEGORY_COLORS[entry.name as ExpenseCategory] ??
+                  CATEGORY_COLORS[entry.rawCategory as ExpenseCategory] ??
                   CATEGORY_COLORS.other
                 }
               />
@@ -79,7 +81,7 @@ export function ExpensesByCategoryChart({ data }: Props) {
           <Legend
             verticalAlign="bottom"
             iconSize={8}
-            wrapperStyle={{ fontSize: 12, textTransform: "capitalize" }}
+            wrapperStyle={{ fontSize: 12 }}
           />
         </PieChart>
       </ResponsiveContainer>

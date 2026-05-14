@@ -19,7 +19,7 @@ class AuthService:
         if self.users.get_by_email(data.email) is not None:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Email already registered",
+                detail="Email já cadastrado",
             )
         return self.users.create(
             name=data.name,
@@ -33,7 +33,7 @@ class AuthService:
         if user is None or not verify_password(data.password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password",
+                detail="Email ou senha incorretos",
             )
         token = create_access_token(subject=user.id)
         return TokenResponse(

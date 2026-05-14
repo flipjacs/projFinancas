@@ -18,8 +18,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { ApiError } from "@/types/api";
 
 const loginSchema = z.object({
-  email: z.string().email("Enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: z.string().email("Informe um email válido"),
+  password: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres"),
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
@@ -41,7 +41,7 @@ export function LoginPage() {
 
   const from =
     (location.state as { from?: { pathname?: string } } | null)?.from
-      ?.pathname ?? "/dashboard";
+      ?.pathname ?? "/painel";
 
   async function onSubmit(values: LoginValues) {
     setServerError(null);
@@ -50,7 +50,7 @@ export function LoginPage() {
       navigate(from, { replace: true });
     } catch (err) {
       const message =
-        err instanceof ApiError ? err.message : "Unable to sign in.";
+        err instanceof ApiError ? err.message : "Não foi possível entrar.";
       setServerError(message);
     }
   }
@@ -58,9 +58,9 @@ export function LoginPage() {
   return (
     <Card>
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
+        <CardTitle className="text-2xl">Bem-vindo de volta</CardTitle>
         <CardDescription>
-          Sign in to manage your personal finances.
+          Entre na sua conta para acompanhar suas finanças.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -71,7 +71,7 @@ export function LoginPage() {
               id="email"
               type="email"
               autoComplete="email"
-              placeholder="you@example.com"
+              placeholder="voce@exemplo.com"
               {...register("email")}
             />
             {errors.email && (
@@ -80,7 +80,7 @@ export function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Senha</Label>
             <Input
               id="password"
               type="password"
@@ -105,13 +105,13 @@ export function LoginPage() {
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Sign in
+            Entrar
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link to="/register" className="font-medium text-primary hover:underline">
-              Create one
+            Ainda não tem conta?{" "}
+            <Link to="/cadastro" className="font-medium text-primary hover:underline">
+              Criar agora
             </Link>
           </p>
         </form>

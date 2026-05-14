@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   PiggyBank,
   Receipt,
+  Settings,
   ShieldCheck,
   Wallet,
   type LucideIcon,
@@ -12,21 +13,19 @@ export interface NavItem {
   to: string;
   label: string;
   icon: LucideIcon;
-  /** Disabled items render but cannot be clicked — used for routes that
-   *  exist on the backend but don't yet have a frontend page. */
+  /** Itens desativados aparecem mas não são clicáveis — usados para
+   *  páginas que ainda não foram implementadas. */
   disabled?: boolean;
 }
 
-/**
- * Navigation source of truth. Adding a new section is a one-line change here.
- * The backend has more endpoints than the frontend renders today; disabled
- * entries are placeholders for upcoming phases.
- */
+// Fonte única de verdade da navegação. Adicionar uma nova seção é uma
+// linha nova aqui. Itens com `disabled: true` aparecem como "Em breve".
 export const NAV_ITEMS: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/expenses", label: "Expenses", icon: Receipt },
-  { to: "/installments", label: "Installments", icon: CreditCard, disabled: true },
-  { to: "/financial", label: "Financial planning", icon: Wallet, disabled: true },
-  { to: "/can-i-buy", label: "Purchase analysis", icon: PiggyBank, disabled: true },
-  { to: "/discipline", label: "Discipline mode", icon: ShieldCheck, disabled: true },
+  { to: "/painel", label: "Painel", icon: LayoutDashboard },
+  { to: "/gastos", label: "Gastos", icon: Receipt },
+  { to: "/parcelamentos", label: "Parcelamentos", icon: CreditCard },
+  { to: "/planejamento", label: "Planejamento", icon: Wallet, disabled: true },
+  { to: "/posso-comprar", label: "Posso Comprar?", icon: PiggyBank },
+  { to: "/disciplina", label: "Modo Disciplina", icon: ShieldCheck, disabled: true },
+  { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];

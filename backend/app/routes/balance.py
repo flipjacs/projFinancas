@@ -9,7 +9,7 @@ from app.models.user import User
 from app.schemas.balance import BalanceResponse, MonthlySummary
 from app.services.balance_service import BalanceService
 
-router = APIRouter(prefix="/balance", tags=["balance"])
+router = APIRouter(prefix="/balance", tags=["saldo"])
 
 
 @router.get("", response_model=BalanceResponse)

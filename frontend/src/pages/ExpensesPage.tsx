@@ -30,8 +30,8 @@ export function ExpensesPage() {
   const expensesQuery = useExpenses({ limit: 200 });
   const { create, update, remove } = useExpenseMutations();
 
-  // Filter client-side: the backend doesn't expose category as a query param
-  // and the limit/page-size is small enough that this is fine for now.
+  // Filtramos no front porque o backend ainda não aceita category como
+  // query param e o limit é pequeno o suficiente para isso não pesar.
   const filtered = useMemo(() => {
     const data = expensesQuery.data ?? [];
     if (category === ALL_CATEGORIES) return data;
@@ -47,25 +47,25 @@ export function ExpensesPage() {
     <div className="space-y-6">
       <header className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Expenses</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Gastos</h1>
           <p className="text-sm text-muted-foreground">
-            Manage every expense across your tracked categories.
+            Gerencie todos os seus gastos, organizados por categoria.
           </p>
         </div>
         <Button onClick={() => setCreating(true)}>
           <Plus className="h-4 w-4" />
-          New expense
+          Novo gasto
         </Button>
       </header>
 
       <Card>
         <CardHeader className="flex flex-col gap-3 space-y-0 border-b sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="text-base">All expenses</CardTitle>
+            <CardTitle className="text-base">Todos os gastos</CardTitle>
             <CardDescription>
               {expensesQuery.isLoading
-                ? "Loading…"
-                : `${filtered.length} ${filtered.length === 1 ? "expense" : "expenses"} · ${formatCurrency(totalShown)}`}
+                ? "Carregando…"
+                : `${filtered.length} ${filtered.length === 1 ? "gasto" : "gastos"} · ${formatCurrency(totalShown)}`}
             </CardDescription>
           </div>
           <CategoryFilter value={category} onChange={setCategory} />
@@ -79,13 +79,12 @@ export function ExpensesPage() {
             emptyHint={
               category === ALL_CATEGORIES
                 ? undefined
-                : `No expenses in the "${category}" category yet.`
+                : `Nenhum gasto na categoria "${category}".`
             }
           />
         </CardContent>
       </Card>
 
-      {/* Create */}
       <ExpenseFormDialog
         open={creating}
         onOpenChange={setCreating}
@@ -96,7 +95,6 @@ export function ExpensesPage() {
         }}
       />
 
-      {/* Edit */}
       <ExpenseFormDialog
         open={Boolean(editing)}
         onOpenChange={(open) => !open && setEditing(null)}
@@ -109,7 +107,6 @@ export function ExpensesPage() {
         }}
       />
 
-      {/* Delete */}
       <DeleteExpenseDialog
         expense={deleting}
         onOpenChange={(open) => !open && setDeleting(null)}

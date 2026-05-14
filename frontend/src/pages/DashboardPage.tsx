@@ -8,6 +8,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -48,7 +49,7 @@ export function DashboardPage() {
   const balance = balanceQuery.data;
   const monthly = monthlyQuery.data;
 
-  // Tint the remaining-balance card based on how much runway is left.
+  // Cor do card de saldo restante muda conforme a margem do mês.
   const remainingTone = useMemo(() => {
     if (!balance) return "default" as const;
     const remaining = Number(balance.remaining_balance);
@@ -62,28 +63,28 @@ export function DashboardPage() {
       <header className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Welcome back{user ? `, ${user.name.split(" ")[0]}` : ""}
+            Olá{user ? `, ${user.name.split(" ")[0]}` : ""} 👋
           </h1>
           <p className="text-sm text-muted-foreground">
-            Here&apos;s how your finances look this month.
+            Veja como estão suas finanças neste mês.
           </p>
         </div>
         <Button onClick={() => setCreating(true)}>
           <Plus className="h-4 w-4" />
-          Add expense
+          Novo gasto
         </Button>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          label="Monthly salary"
+          label="Salário mensal"
           value={balance ? formatCurrency(balance.salary) : "-"}
           icon={Wallet}
           loading={balanceQuery.isLoading}
-          hint="Set during registration · update from your account."
+          hint="Definido no cadastro · pode ser editado em Configurações."
         />
         <StatCard
-          label="Spent this month"
+          label="Gasto neste mês"
           value={
             balance ? formatCurrency(balance.total_expenses_this_month) : "-"
           }
@@ -92,31 +93,31 @@ export function DashboardPage() {
           loading={balanceQuery.isLoading}
           hint={
             monthly
-              ? `${monthly.expense_count} expenses recorded`
-              : "Live from /balance"
+              ? `${monthly.expense_count} ${monthly.expense_count === 1 ? "gasto registrado" : "gastos registrados"}`
+              : "Calculado a partir de /balance"
           }
         />
         <StatCard
-          label="Remaining balance"
+          label="Saldo restante"
           value={balance ? formatCurrency(balance.remaining_balance) : "-"}
           icon={Receipt}
           tone={remainingTone}
           loading={balanceQuery.isLoading}
-          hint="Salary minus this month's expenses."
+          hint="Salário menos os gastos do mês."
         />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <ChartCard
-          title="Spending by category"
-          description="Breakdown for the current month"
+          title="Gastos por categoria"
+          description="Distribuição do mês atual"
           loading={monthlyQuery.isLoading}
         >
           <ExpensesByCategoryChart data={monthly?.by_category ?? []} />
         </ChartCard>
         <ChartCard
-          title="Last 6 months"
-          description="Total expenses per month"
+          title="Últimos 6 meses"
+          description="Total gasto em cada mês"
           loading={trailing.isLoading}
         >
           <MonthlySpendingChart
@@ -129,14 +130,14 @@ export function DashboardPage() {
       <Card>
         <CardHeader className="flex flex-row items-start justify-between space-y-0">
           <div className="space-y-1">
-            <CardTitle className="text-base">Recent transactions</CardTitle>
+            <CardTitle className="text-base">Gastos recentes</CardTitle>
             <CardDescription>
-              Your most recent expenses across all categories.
+              Seus últimos lançamentos em todas as categorias.
             </CardDescription>
           </div>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/expenses">
-              View all
+            <Link to="/gastos">
+              Ver todos
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -157,12 +158,12 @@ export function DashboardPage() {
           ) : !expensesQuery.data || expensesQuery.data.length === 0 ? (
             <EmptyState
               icon={Receipt}
-              title="No expenses yet"
-              description="Add your first expense to start tracking."
+              title="Nenhum gasto registrado ainda"
+              description="Adicione seu primeiro gasto para começar."
               action={
                 <Button onClick={() => setCreating(true)}>
                   <Plus className="h-4 w-4" />
-                  Add expense
+                  Novo gasto
                 </Button>
               }
             />
@@ -180,7 +181,9 @@ export function DashboardPage() {
                         {expense.title}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {format(parseISO(expense.created_at), "MMM d, yyyy")}
+                        {format(parseISO(expense.created_at), "d 'de' MMM',' yyyy", {
+                          locale: ptBR,
+                        })}
                       </p>
                     </div>
                   </div>
