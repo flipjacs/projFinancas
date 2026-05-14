@@ -28,6 +28,14 @@ const CanIBuyPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import("@/pages/SettingsPage").then((m) => ({ default: m.SettingsPage })),
 );
+const PlanejamentoPage = lazy(() =>
+  import("@/pages/PlanejamentoPage").then((m) => ({
+    default: m.PlanejamentoPage,
+  })),
+);
+const ObjetivosPage = lazy(() =>
+  import("@/pages/ObjetivosPage").then((m) => ({ default: m.ObjetivosPage })),
+);
 
 export function AppRouter() {
   return (
@@ -48,6 +56,8 @@ export function AppRouter() {
           <Route path="/painel" element={<DashboardPage />} />
           <Route path="/gastos" element={<ExpensesPage />} />
           <Route path="/parcelamentos" element={<InstallmentsPage />} />
+          <Route path="/planejamento" element={<PlanejamentoPage />} />
+          <Route path="/objetivos" element={<ObjetivosPage />} />
           <Route path="/posso-comprar" element={<CanIBuyPage />} />
           <Route path="/configuracoes" element={<SettingsPage />} />
         </Route>

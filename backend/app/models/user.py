@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from app.models.discipline_mode import DisciplineMode
     from app.models.expense import Expense
     from app.models.installment import Installment
+    from app.models.planejamento import DistribuicaoFinanceira, ObjetivoFinanceiro
 
 
 class User(Base):
@@ -40,6 +41,16 @@ class User(Base):
     discipline_mode: Mapped["DisciplineMode | None"] = relationship(
         back_populates="user",
         uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    distribuicoes: Mapped[list["DistribuicaoFinanceira"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    objetivos: Mapped[list["ObjetivoFinanceiro"]] = relationship(
+        back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )

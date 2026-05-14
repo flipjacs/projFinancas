@@ -98,6 +98,8 @@ function GlobalChrome() {
     { key: "d", handler: () => pendingG && goTo("/painel") },
     { key: "g", handler: () => pendingG && goTo("/gastos") },
     { key: "p", handler: () => pendingG && goTo("/parcelamentos") },
+    { key: "n", handler: () => pendingG && goTo("/planejamento") },
+    { key: "o", handler: () => pendingG && goTo("/objetivos") },
     { key: "c", handler: () => pendingG && goTo("/posso-comprar") },
     { key: "s", handler: () => pendingG && goTo("/configuracoes") },
   ]);

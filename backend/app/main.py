@@ -30,6 +30,13 @@ OPENAPI_TAGS_METADATA = [
         "name": "disciplina",
         "description": "Modo Disciplina: limites de gasto, pontuação, sequências e avisos.",
     },
+    {
+        "name": "planejamento",
+        "description": (
+            "Distribuição de renda por categoria, objetivos financeiros, "
+            "resumo do mês e alertas de limites."
+        ),
+    },
     {"name": "saúde", "description": "Probes de liveness e readiness."},
 ]
 

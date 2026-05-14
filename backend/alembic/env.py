@@ -9,6 +9,7 @@ from app.models import (  # noqa: F401  (import for metadata)
     discipline_mode,
     expense,
     installment,
+    planejamento,
     user,
 )
 

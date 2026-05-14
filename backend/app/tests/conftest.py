@@ -12,8 +12,10 @@ from app.main import app
 from app.middleware.rate_limit import limiter
 from app.models import (  # noqa: F401  (register metadata)
     DisciplineMode,
+    DistribuicaoFinanceira,
     Expense,
     Installment,
+    ObjetivoFinanceiro,
     User,
 )
 from app.utils.cache import reset_cache_backend

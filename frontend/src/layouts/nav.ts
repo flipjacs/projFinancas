@@ -5,6 +5,7 @@ import {
   Receipt,
   Settings,
   ShieldCheck,
+  Target,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -24,7 +25,8 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/painel", label: "Painel", icon: LayoutDashboard },
   { to: "/gastos", label: "Gastos", icon: Receipt },
   { to: "/parcelamentos", label: "Parcelamentos", icon: CreditCard },
-  { to: "/planejamento", label: "Planejamento", icon: Wallet, disabled: true },
+  { to: "/planejamento", label: "Planejamento", icon: Wallet },
+  { to: "/objetivos", label: "Objetivos", icon: Target },
   { to: "/posso-comprar", label: "Posso Comprar?", icon: PiggyBank },
   { to: "/disciplina", label: "Modo Disciplina", icon: ShieldCheck, disabled: true },
   { to: "/configuracoes", label: "Configurações", icon: Settings },

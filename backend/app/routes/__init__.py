@@ -8,6 +8,7 @@ from app.routes import (
     financial,
     financial_analysis,
     installments,
+    planejamento,
     users,
 )
 
@@ -22,5 +23,6 @@ api_router.include_router(installments.router)
 api_router.include_router(financial.router)
 api_router.include_router(financial_analysis.router)
 api_router.include_router(discipline.router)
+api_router.include_router(planejamento.router)
 
 __all__ = ["api_router"]
