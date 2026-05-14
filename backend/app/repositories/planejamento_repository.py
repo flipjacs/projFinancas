@@ -30,6 +30,8 @@ class DistribuicaoRepository:
         valor: Decimal,
         porcentagem: Decimal,
         limite_mensal: Decimal,
+        subcategoria: str | None = None,
+        objetivo_relacionado_id: int | None = None,
     ) -> DistribuicaoFinanceira:
         item = DistribuicaoFinanceira(
             usuario_id=usuario_id,
@@ -39,6 +41,8 @@ class DistribuicaoRepository:
             valor=valor,
             porcentagem=porcentagem,
             limite_mensal=limite_mensal,
+            subcategoria=subcategoria,
+            objetivo_relacionado_id=objetivo_relacionado_id,
         )
         self.db.add(item)
         self.db.commit()
@@ -54,6 +58,9 @@ class DistribuicaoRepository:
         valor: Decimal | None = None,
         porcentagem: Decimal | None = None,
         limite_mensal: Decimal | None = None,
+        subcategoria: str | None = None,
+        objetivo_relacionado_id: int | None = None,
+        clear_objetivo_relacionado: bool = False,
     ) -> DistribuicaoFinanceira:
         if categoria is not None:
             item.categoria = categoria
@@ -67,6 +74,12 @@ class DistribuicaoRepository:
             item.porcentagem = porcentagem
         if limite_mensal is not None:
             item.limite_mensal = limite_mensal
+        if subcategoria is not None:
+            item.subcategoria = subcategoria
+        if clear_objetivo_relacionado:
+            item.objetivo_relacionado_id = None
+        elif objetivo_relacionado_id is not None:
+            item.objetivo_relacionado_id = objetivo_relacionado_id
         self.db.commit()
         self.db.refresh(item)
         return item

@@ -10,8 +10,13 @@ import { EmptyState } from "@/components/EmptyState";
 import { CardObjetivo } from "@/components/planejamento/CardObjetivo";
 import { ConfirmDialog } from "@/components/planejamento/ConfirmDialog";
 import { ObjetivoFormDialog } from "@/components/planejamento/ObjetivoFormDialog";
-import { useObjetivoMutations, useObjetivos } from "@/hooks/usePlanejamento";
-import type { Objetivo } from "@/types/planejamento";
+import {
+  useDistribuicoes,
+  useObjetivoMutations,
+  useObjetivos,
+  useResumoPlanejamento,
+} from "@/hooks/usePlanejamento";
+import type { Distribuicao, Objetivo } from "@/types/planejamento";
 import { formatCurrency } from "@/utils/format";
 import {
   Bar,
@@ -29,9 +34,33 @@ export function ObjetivosPage() {
   const [deleting, setDeleting] = useState<Objetivo | null>(null);
 
   const objetivos = useObjetivos();
+  const distribuicoes = useDistribuicoes();
+  const resumo = useResumoPlanejamento();
   const { create, update, remove } = useObjetivoMutations();
 
   const lista = objetivos.data ?? [];
+
+  // Indexa as distribuições que linkam para cada objetivo.
+  const distribuicaoPorObjetivo = useMemo(() => {
+    const map = new Map<number, Distribuicao>();
+    distribuicoes.data?.forEach((d) => {
+      if (d.objetivo_relacionado_id !== null) {
+        map.set(d.objetivo_relacionado_id, d);
+      }
+    });
+    return map;
+  }, [distribuicoes.data]);
+
+  // Pega a alocação mensal calculada pelo backend (importante quando é %).
+  const alocacaoPorObjetivo = useMemo(() => {
+    const map = new Map<number, number>();
+    resumo.data?.categorias.forEach((cat) => {
+      if (cat.objetivo_relacionado_id !== null) {
+        map.set(cat.objetivo_relacionado_id, Number(cat.valor_planejado));
+      }
+    });
+    return map;
+  }, [resumo.data]);
 
   const stats = useMemo(() => {
     const totalMeta = lista.reduce((s, o) => s + Number(o.valor_meta), 0);
@@ -207,6 +236,8 @@ export function ObjetivosPage() {
                 key={item.id}
                 index={idx}
                 objetivo={item}
+                distribuicaoLinkada={distribuicaoPorObjetivo.get(item.id)}
+                alocacaoMensal={alocacaoPorObjetivo.get(item.id)}
                 onEdit={setEditing}
                 onDelete={setDeleting}
               />

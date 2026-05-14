@@ -50,7 +50,10 @@ class DistribuicaoFinanceira(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     categoria: Mapped[str] = mapped_column(String(80), nullable=False)
+    # Hierarquia: tipo_categoria é a categoria principal (Lazer, Fixo, Objetivos…)
+    # e subcategoria é o detalhe opcional (ex.: "Fundo Viagem" dentro de Objetivos).
     tipo_categoria: Mapped[str] = mapped_column(String(40), nullable=False)
+    subcategoria: Mapped[str | None] = mapped_column(String(80), nullable=True)
     tipo_distribuicao: Mapped[str] = mapped_column(String(20), nullable=False)
     valor: Mapped[Decimal] = mapped_column(
         Numeric(12, 2), nullable=False, default=Decimal("0")
@@ -61,11 +64,19 @@ class DistribuicaoFinanceira(Base):
     limite_mensal: Mapped[Decimal] = mapped_column(
         Numeric(12, 2), nullable=False, default=Decimal("0")
     )
+    # Quando a categoria é "Objetivos" o sistema cria um ObjetivoFinanceiro
+    # automaticamente e linka aqui — permitindo sync de prazos/valores.
+    objetivo_relacionado_id: Mapped[int | None] = mapped_column(
+        ForeignKey("objetivos_financeiros.id", ondelete="SET NULL"), nullable=True
+    )
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
     user: Mapped["User"] = relationship(back_populates="distribuicoes")
+    objetivo: Mapped["ObjetivoFinanceiro | None"] = relationship(
+        "ObjetivoFinanceiro", lazy="joined"
+    )
 
 
 class ObjetivoFinanceiro(Base):

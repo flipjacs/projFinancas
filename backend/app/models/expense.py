@@ -35,7 +35,22 @@ class Expense(Base):
     )
     title: Mapped[str] = mapped_column(String(180), nullable=False)
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    # `category` é a categoria BASE (alimentação, transporte, ...). A leitura
+    # financeira refinada vem de `categoria_comportamental`.
     category: Mapped[str] = mapped_column(String(60), nullable=False)
+    categoria_comportamental: Mapped[str | None] = mapped_column(
+        String(20), nullable=True
+    )
+    impacto_financeiro: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    # "Earmark": quando o usuário direciona explicitamente esse gasto para um
+    # envelope (ex.: aporte que pertence só à "Reserva de Emergência" e a mais
+    # ninguém). Para envelopes de Reserva/Objetivos, isolation é mandatório —
+    # SEM esse vínculo, o gasto não cai em nenhuma reserva. Isso evita que
+    # uma "Poupança" genérica seja contada em todos os fundos ao mesmo tempo.
+    distribuicao_id: Mapped[int | None] = mapped_column(
+        ForeignKey("distribuicao_financeira.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     recurring: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

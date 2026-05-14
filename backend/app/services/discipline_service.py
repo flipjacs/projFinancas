@@ -52,14 +52,24 @@ class DisciplineService:
         installment_commitment = monthly_installment_commitment(
             self.installments.list_active_by_user(user.id)
         )
-        category_totals = dict(
-            self.expenses.totals_by_category_in_period(user.id, start, end)
-        )
-        leisure = sum(
-            (Decimal(category_totals.get(cat, 0)) for cat in LEISURE_CATEGORIES),
-            start=Decimal("0"),
-        )
-        savings = Decimal(category_totals.get(SAVINGS_CATEGORY, 0))
+        # Agora a leitura de "lazer" usa a categoria comportamental — um
+        # McDonald's marcado como lazer entra aqui mesmo sendo `food`. A
+        # base continua sendo o fallback (entertainment/shopping).
+        gastos = self.expenses.list_period_with_behavior(user.id, start, end)
+        leisure = Decimal("0")
+        savings = Decimal("0")
+        for exp in gastos:
+            comp = exp.categoria_comportamental
+            if comp == "lazer" or comp == "emocional":
+                leisure += Decimal(exp.amount)
+            elif (
+                comp is None
+                and exp.category in LEISURE_CATEGORIES
+            ):
+                # Sem comportamental marcado, caímos no comportamento legado.
+                leisure += Decimal(exp.amount)
+            if exp.category == SAVINGS_CATEGORY:
+                savings += Decimal(exp.amount)
         return SpendingMetrics(
             salary=salary,
             leisure_spending=leisure,

@@ -1,4 +1,11 @@
-import { CalendarDays, MoreHorizontal, Pencil, Target, Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  Link2,
+  MoreHorizontal,
+  Pencil,
+  Target,
+  Trash2,
+} from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -11,20 +18,32 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { BarraProgresso } from "@/components/planejamento/BarraProgresso";
 import { cn } from "@/lib/utils";
-import type { Objetivo } from "@/types/planejamento";
+import type { Distribuicao, Objetivo } from "@/types/planejamento";
 import { formatCurrency } from "@/utils/format";
 
 interface Props {
   objetivo: Objetivo;
+  /** Distribuição que está alocando dinheiro para este objetivo, se houver. */
+  distribuicaoLinkada?: Distribuicao;
+  /** Valor mensal efetivo calculado pelo backend (usa salário quando %). */
+  alocacaoMensal?: number;
   onEdit: (objetivo: Objetivo) => void;
   onDelete: (objetivo: Objetivo) => void;
   index?: number;
 }
 
-export function CardObjetivo({ objetivo, onEdit, onDelete, index = 0 }: Props) {
+export function CardObjetivo({
+  objetivo,
+  distribuicaoLinkada,
+  alocacaoMensal,
+  onEdit,
+  onDelete,
+  index = 0,
+}: Props) {
   const progresso = Number(objetivo.progresso_percentual);
   const necessario = Number(objetivo.valor_necessario_por_mes);
   const concluido = Number(objetivo.valor_atual) >= Number(objetivo.valor_meta);
+  const alocacao = alocacaoMensal ?? null;
 
   return (
     <Card
@@ -120,6 +139,20 @@ export function CardObjetivo({ objetivo, onEdit, onDelete, index = 0 }: Props) {
                   por mês
                 </span>
               </p>
+              {alocacao !== null && (
+                <p className="mt-2 flex items-center gap-1 border-t pt-2 text-xs text-muted-foreground">
+                  <Link2 className="h-3 w-3" />
+                  Você está alocando{" "}
+                  <span className="font-medium text-foreground">
+                    {formatCurrency(alocacao)}/mês
+                  </span>
+                  {distribuicaoLinkada && (
+                    <span className="ml-1 truncate">
+                      via <em>{distribuicaoLinkada.categoria}</em>
+                    </span>
+                  )}
+                </p>
+              )}
             </>
           )}
         </div>

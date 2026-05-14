@@ -37,6 +37,10 @@ export function useExpenseMutations() {
   function invalidateAll() {
     qc.invalidateQueries({ queryKey: expenseKeys.all });
     qc.invalidateQueries({ queryKey: ["balance"] });
+    // Gastos recorrentes alimentam o envelope "Fixo" automaticamente —
+    // qualquer mudança (criar, editar, excluir, ligar/desligar recurring)
+    // exige refetch do planejamento e dos alertas.
+    qc.invalidateQueries({ queryKey: ["planejamento"] });
   }
 
   function reportError(action: string) {

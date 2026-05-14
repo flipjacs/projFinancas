@@ -1,4 +1,11 @@
-import { AlertTriangle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  MoreHorizontal,
+  Pencil,
+  Repeat,
+  Target,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -10,12 +17,18 @@ import {
 import { BarraProgresso } from "@/components/planejamento/BarraProgresso";
 import { corDoTipo, labelDoTipo } from "@/components/planejamento/cores";
 import { cn } from "@/lib/utils";
-import type { CategoriaResumo, Distribuicao } from "@/types/planejamento";
+import type {
+  CategoriaResumo,
+  Distribuicao,
+  GastoFixoItem,
+} from "@/types/planejamento";
 import { formatCurrency } from "@/utils/format";
 
 interface Props {
   distribuicao: Distribuicao;
   resumo?: CategoriaResumo;
+  /** Quando este card é do tipo Fixo, lista os recorrentes que o compõem. */
+  composicaoFixos?: GastoFixoItem[];
   onEdit: (distribuicao: Distribuicao) => void;
   onDelete: (distribuicao: Distribuicao) => void;
   index?: number;
@@ -24,6 +37,7 @@ interface Props {
 export function CardCategoria({
   distribuicao,
   resumo,
+  composicaoFixos,
   onEdit,
   onDelete,
   index = 0,
@@ -37,6 +51,8 @@ export function CardCategoria({
   const limite = Number(resumo?.limite_mensal ?? distribuicao.limite_mensal);
   const excedido = resumo?.excedido ?? false;
   const proximo = resumo?.proximo_do_limite ?? false;
+  const isFixo = distribuicao.tipo_categoria === "Fixo";
+  const fixos = isFixo ? composicaoFixos ?? [] : [];
 
   return (
     <Card
@@ -60,19 +76,33 @@ export function CardCategoria({
             <h3 className="truncate text-sm font-semibold tracking-tight">
               {distribuicao.categoria}
             </h3>
-            <p
-              className="mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
-              style={{
-                backgroundColor: `${cor}1f`,
-                color: cor,
-              }}
-            >
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: cor }}
-              />
-              {labelDoTipo(distribuicao.tipo_categoria)}
-            </p>
+                className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                style={{
+                  backgroundColor: `${cor}1f`,
+                  color: cor,
+                }}
+              >
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: cor }}
+                />
+                {labelDoTipo(distribuicao.tipo_categoria)}
+                {distribuicao.subcategoria && (
+                  <>
+                    <span className="opacity-60">›</span>
+                    <span className="opacity-90">{distribuicao.subcategoria}</span>
+                  </>
+                )}
+              </span>
+              {distribuicao.objetivo_relacionado_id !== null && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  <Target className="h-3 w-3" />
+                  Objetivo vinculado
+                </span>
+              )}
+            </div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -145,6 +175,44 @@ export function CardCategoria({
           <div className="flex items-center gap-2 rounded-md bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300">
             <AlertTriangle className="h-3.5 w-3.5" />
             Você está perto do limite mensal.
+          </div>
+        )}
+
+        {isFixo && (
+          <div className="space-y-2 border-t pt-3">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <Repeat className="h-3 w-3" />
+              Composto automaticamente
+              <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] normal-case">
+                {fixos.length}{" "}
+                {fixos.length === 1 ? "recorrente" : "recorrentes"}
+              </span>
+            </div>
+            {fixos.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Nenhum gasto marcado como recorrente ainda — qualquer despesa
+                que você marcar como recorrente entra aqui automaticamente.
+              </p>
+            ) : (
+              <ul className="space-y-1.5">
+                {fixos.slice(0, 5).map((g) => (
+                  <li
+                    key={g.id}
+                    className="flex items-center justify-between gap-2 text-xs"
+                  >
+                    <span className="min-w-0 truncate">{g.title}</span>
+                    <span className="shrink-0 font-semibold tabular-nums">
+                      {formatCurrency(g.amount)}
+                    </span>
+                  </li>
+                ))}
+                {fixos.length > 5 && (
+                  <li className="text-[11px] text-muted-foreground">
+                    + {fixos.length - 5} outros recorrentes
+                  </li>
+                )}
+              </ul>
+            )}
           </div>
         )}
       </CardContent>

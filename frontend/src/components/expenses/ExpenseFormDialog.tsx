@@ -22,7 +22,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CATEGORY_LABELS } from "@/components/CategoryBadge";
-import { EXPENSE_CATEGORIES, type Expense } from "@/types/expense";
+import {
+  CATEGORIAS_COMPORTAMENTAIS_EXPENSE,
+  EXPENSE_CATEGORIES,
+  LABEL_COMPORTAMENTAL_EXPENSE,
+  type Expense,
+} from "@/types/expense";
+import { useDistribuicoes } from "@/hooks/usePlanejamento";
+import { labelDoTipo } from "@/components/planejamento/cores";
+
+const COMPORTAMENTAL_OPTIONS = ["auto", ...CATEGORIAS_COMPORTAMENTAIS_EXPENSE] as const;
+
+const SEM_EARMARK = "sem_earmark";
 
 const schema = z.object({
   title: z.string().min(1, "Descrição é obrigatória").max(180),
@@ -30,10 +41,24 @@ const schema = z.object({
     .number({ invalid_type_error: "Valor precisa ser um número" })
     .min(0, "Valor não pode ser negativo"),
   category: z.enum(EXPENSE_CATEGORIES),
+  categoria_comportamental: z.enum(COMPORTAMENTAL_OPTIONS),
+  // String porque <Select> só aceita string; convertemos pra number/null no submit.
+  distribuicao_id: z.string(),
   recurring: z.boolean(),
 });
 
-export type ExpenseFormValues = z.infer<typeof schema>;
+type FormSchema = z.infer<typeof schema>;
+
+// Tipo exposto ao consumidor: já com "auto" e "sem_earmark" resolvidos pra null.
+export type ExpenseFormValues = Omit<
+  FormSchema,
+  "categoria_comportamental" | "distribuicao_id"
+> & {
+  categoria_comportamental:
+    | (typeof CATEGORIAS_COMPORTAMENTAIS_EXPENSE)[number]
+    | null;
+  distribuicao_id: number | null;
+};
 
 interface ExpenseFormDialogProps {
   open: boolean;
@@ -44,10 +69,12 @@ interface ExpenseFormDialogProps {
   submitting?: boolean;
 }
 
-const DEFAULT_VALUES: ExpenseFormValues = {
+const DEFAULT_VALUES: FormSchema = {
   title: "",
   amount: 0,
   category: "other",
+  categoria_comportamental: "auto",
+  distribuicao_id: SEM_EARMARK,
   recurring: false,
 };
 
@@ -59,8 +86,11 @@ export function ExpenseFormDialog({
   submitting,
 }: ExpenseFormDialogProps) {
   const isEdit = Boolean(expense);
+  // Lista de envelopes do planejamento — alimenta o seletor de earmark.
+  // Carregamento é cacheado pelo react-query, então abrir o dialog é rápido.
+  const distribuicoes = useDistribuicoes();
 
-  const form = useForm<ExpenseFormValues>({
+  const form = useForm<FormSchema>({
     resolver: zodResolver(schema),
     defaultValues: DEFAULT_VALUES,
   });
@@ -74,6 +104,13 @@ export function ExpenseFormDialog({
         title: expense.title,
         amount: Number(expense.amount),
         category: expense.category,
+        categoria_comportamental:
+          (expense.categoria_comportamental as FormSchema["categoria_comportamental"]) ??
+          "auto",
+        distribuicao_id:
+          expense.distribuicao_id !== null
+            ? String(expense.distribuicao_id)
+            : SEM_EARMARK,
         recurring: expense.recurring,
       });
     } else {
@@ -81,8 +118,32 @@ export function ExpenseFormDialog({
     }
   }, [open, expense, form]);
 
-  async function handleSubmit(values: ExpenseFormValues) {
-    await onSubmit(values);
+  const categoriaSelecionada = form.watch("category");
+  const distribuicaoSelecionada = form.watch("distribuicao_id");
+
+  // Para savings o earmark é essencial — destacamos isso visualmente.
+  // Sem earmark, gastos de "savings" não caem em nenhuma reserva (isolation).
+  const earmarkObrigatorio = categoriaSelecionada === "savings";
+  const semEarmark = distribuicaoSelecionada === SEM_EARMARK;
+
+  async function handleSubmit(values: FormSchema) {
+    // "auto" → null no comportamental. "sem_earmark" → null em distribuicao_id.
+    // Também avisamos o backend pra LIMPAR o earmark via desvincular flag
+    // quando o usuário voltou de "linkado" para "sem_earmark" no edit.
+    const { categoria_comportamental, distribuicao_id, ...rest } = values;
+    const earmarkId =
+      distribuicao_id === SEM_EARMARK ? null : Number(distribuicao_id);
+    const desvincular =
+      isEdit && earmarkId === null && expense?.distribuicao_id !== null;
+
+    await onSubmit({
+      ...rest,
+      categoria_comportamental:
+        categoria_comportamental === "auto" ? null : categoria_comportamental,
+      distribuicao_id: earmarkId,
+      // Cast — o ExpenseUpdate tem `desvincular_distribuicao` opcional.
+      ...(desvincular ? { desvincular_distribuicao: true } : {}),
+    } as ExpenseFormValues);
   }
 
   return (
@@ -140,7 +201,7 @@ export function ExpenseFormDialog({
               <Select
                 value={form.watch("category")}
                 onValueChange={(value) =>
-                  form.setValue("category", value as ExpenseFormValues["category"], {
+                  form.setValue("category", value as FormSchema["category"], {
                     shouldValidate: true,
                   })
                 }
@@ -162,6 +223,94 @@ export function ExpenseFormDialog({
                 </p>
               )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="categoria_comportamental">
+              Comportamento financeiro
+            </Label>
+            <Select
+              value={form.watch("categoria_comportamental")}
+              onValueChange={(value) =>
+                form.setValue(
+                  "categoria_comportamental",
+                  value as FormSchema["categoria_comportamental"],
+                  { shouldValidate: true },
+                )
+              }
+            >
+              <SelectTrigger id="categoria_comportamental">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">
+                  Automático (sugerido pela categoria)
+                </SelectItem>
+                {CATEGORIAS_COMPORTAMENTAIS_EXPENSE.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {LABEL_COMPORTAMENTAL_EXPENSE[c]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              McDonald's é <em>alimentação</em>, mas comportamentalmente é{" "}
+              <em>lazer</em>. Marque manualmente quando fizer sentido.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="distribuicao_id">
+              Direcionar para envelope{" "}
+              {earmarkObrigatorio ? (
+                <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                  · recomendado para Reserva/Objetivos
+                </span>
+              ) : (
+                <span className="text-xs font-normal text-muted-foreground">
+                  · opcional
+                </span>
+              )}
+            </Label>
+            <Select
+              value={form.watch("distribuicao_id")}
+              onValueChange={(value) =>
+                form.setValue("distribuicao_id", value, {
+                  shouldValidate: true,
+                })
+              }
+            >
+              <SelectTrigger id="distribuicao_id">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SEM_EARMARK}>
+                  Sem direcionamento (categorização automática)
+                </SelectItem>
+                {(distribuicoes.data ?? []).map((d) => (
+                  <SelectItem key={d.id} value={String(d.id)}>
+                    {d.categoria}
+                    {d.subcategoria ? ` › ${d.subcategoria}` : ""}{" "}
+                    <span className="text-xs text-muted-foreground">
+                      ({labelDoTipo(d.tipo_categoria)})
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {earmarkObrigatorio && semEarmark && (
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                Sem direcionar, esse aporte não cai em nenhum Fundo / Reserva —
+                cada um conta só o que foi explicitamente direcionado para ele.
+              </p>
+            )}
+            {!earmarkObrigatorio && (
+              <p className="text-xs text-muted-foreground">
+                Gastos sem direcionamento caem nos envelopes pelo casamento de
+                categoria. Direcione manualmente quando quiser garantir que o
+                gasto pertence a um envelope específico.
+              </p>
+            )}
           </div>
 
           <label className="flex cursor-pointer items-center gap-2 rounded-md border p-3 text-sm">

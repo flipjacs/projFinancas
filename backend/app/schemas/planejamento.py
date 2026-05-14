@@ -11,23 +11,43 @@ class TipoDistribuicao(StrEnum):
 
 
 class TipoCategoria(StrEnum):
+    """Categoria PRINCIPAL do orçamento.
+
+    "Fundo Viagem" e "Objetivos Tech" não aparecem mais aqui — viraram
+    *subcategoria* de `OBJETIVOS`, com um `ObjetivoFinanceiro` linkado.
+    Mantemos os valores antigos por compat. com bases já populadas.
+    """
+
     FIXO = "Fixo"
     RESERVA = "Reserva"
-    FUNDO_VIAGEM = "Fundo Viagem"
-    OBJETIVOS_TECH = "Objetivos Tech"
+    ALIMENTACAO = "Alimentacao"
     LAZER = "Lazer"
     TRANSPORTE = "Transporte"
     EDUCACAO = "Educacao"
     SAUDE = "Saude"
+    OBJETIVOS = "Objetivos"
     OUTROS = "Outros"
+    # Valores legados (não devem ser oferecidos na UI nova)
+    FUNDO_VIAGEM = "Fundo Viagem"
+    OBJETIVOS_TECH = "Objetivos Tech"
 
 
 # ---------- Distribuição ----------
 
 
+class ObjetivoInline(BaseModel):
+    """Payload usado para criar um objetivo junto com a distribuição."""
+
+    nome: str = Field(min_length=1, max_length=120)
+    valor_meta: Decimal = Field(gt=0, decimal_places=2)
+    valor_atual: Decimal = Field(default=Decimal("0"), ge=0, decimal_places=2)
+    prazo_meses: int = Field(gt=0, le=600)
+
+
 class DistribuicaoBase(BaseModel):
     categoria: str = Field(min_length=1, max_length=80)
     tipo_categoria: TipoCategoria
+    subcategoria: str | None = Field(default=None, max_length=80)
     tipo_distribuicao: TipoDistribuicao
     valor: Decimal = Field(default=Decimal("0"), ge=0, decimal_places=2)
     porcentagem: Decimal = Field(default=Decimal("0"), ge=0, le=100, decimal_places=2)
@@ -51,16 +71,22 @@ class DistribuicaoBase(BaseModel):
 
 
 class DistribuicaoCreate(DistribuicaoBase):
-    pass
+    # Quando `tipo_categoria == Objetivos`, o sistema espera ou um
+    # `objetivo_relacionado_id` apontando para um objetivo existente, ou um
+    # `objetivo` inline com os dados pra criar um novo.
+    objetivo_relacionado_id: int | None = None
+    objetivo: ObjetivoInline | None = None
 
 
 class DistribuicaoUpdate(BaseModel):
     categoria: str | None = Field(default=None, min_length=1, max_length=80)
     tipo_categoria: TipoCategoria | None = None
+    subcategoria: str | None = Field(default=None, max_length=80)
     tipo_distribuicao: TipoDistribuicao | None = None
     valor: Decimal | None = Field(default=None, ge=0, decimal_places=2)
     porcentagem: Decimal | None = Field(default=None, ge=0, le=100, decimal_places=2)
     limite_mensal: Decimal | None = Field(default=None, ge=0, decimal_places=2)
+    objetivo_relacionado_id: int | None = None
 
 
 class DistribuicaoResponse(BaseModel):
@@ -70,10 +96,12 @@ class DistribuicaoResponse(BaseModel):
     usuario_id: int
     categoria: str
     tipo_categoria: str
+    subcategoria: str | None
     tipo_distribuicao: str
     valor: Decimal
     porcentagem: Decimal
     limite_mensal: Decimal
+    objetivo_relacionado_id: int | None
     criado_em: datetime
 
 
@@ -123,6 +151,7 @@ class CategoriaResumo(BaseModel):
     distribuicao_id: int
     categoria: str
     tipo_categoria: str
+    subcategoria: str | None = None
     tipo_distribuicao: str
     valor_planejado: Decimal
     porcentagem_planejada: Decimal
@@ -131,6 +160,26 @@ class CategoriaResumo(BaseModel):
     percentual_utilizado: Decimal
     excedido: bool
     proximo_do_limite: bool
+    objetivo_relacionado_id: int | None = None
+
+
+class ResumoComportamental(BaseModel):
+    """Agrega o gasto por categoria comportamental (essencial, lazer, ...)."""
+
+    essencial: Decimal
+    lazer: Decimal
+    crescimento: Decimal
+    sobrevivencia: Decimal
+    emocional: Decimal
+
+
+class GastoFixoItem(BaseModel):
+    """Item da composição automática da categoria 'Fixo'."""
+
+    id: int
+    title: str
+    category: str
+    amount: Decimal
 
 
 class PlanejamentoResumo(BaseModel):
@@ -139,7 +188,12 @@ class PlanejamentoResumo(BaseModel):
     porcentagem_comprometida: Decimal
     saldo_restante: Decimal
     total_gasto_mes: Decimal
+    # Total absoluto dos gastos marcados como recorrentes — alimenta o
+    # envelope "Fixo" independentemente da categoria base de cada um.
+    total_gastos_fixos: Decimal
+    composicao_fixos: list[GastoFixoItem]
     categorias: list[CategoriaResumo]
+    comportamental: ResumoComportamental
 
 
 class AlertaFinanceiro(BaseModel):

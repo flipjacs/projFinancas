@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, PiggyBank, Plus, Target, Wallet } from "lucide-react";
+import { ArrowRight, Info, PiggyBank, Plus, Repeat, Target, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,10 +12,13 @@ import { CardCategoria } from "@/components/planejamento/CardCategoria";
 import { ConfirmDialog } from "@/components/planejamento/ConfirmDialog";
 import { DistribuicaoFormDialog } from "@/components/planejamento/DistribuicaoFormDialog";
 import { GraficoDistribuicao } from "@/components/planejamento/GraficoDistribuicao";
+import { PainelComportamental } from "@/components/planejamento/PainelComportamental";
 import {
   useAlertasPlanejamento,
   useDistribuicaoMutations,
   useDistribuicoes,
+  useObjetivoMutations,
+  useObjetivos,
   useResumoPlanejamento,
 } from "@/hooks/usePlanejamento";
 import type { Distribuicao } from "@/types/planejamento";
@@ -29,7 +32,20 @@ export function PlanejamentoPage() {
   const distribuicoes = useDistribuicoes();
   const resumo = useResumoPlanejamento();
   const alertas = useAlertasPlanejamento();
+  const objetivos = useObjetivos();
   const { create, update, remove } = useDistribuicaoMutations();
+  const { update: updateObjetivo } = useObjetivoMutations();
+
+  // Quando o usuário está editando uma distribuição linkada a um objetivo,
+  // precisamos do objetivo carregado pra pré-popular o form. Sem isso, o
+  // dialog não saberia o nome/meta atuais (bug 2).
+  const objetivoLinkado = useMemo(() => {
+    if (!editing?.objetivo_relacionado_id) return null;
+    return (
+      objetivos.data?.find((o) => o.id === editing.objetivo_relacionado_id) ??
+      null
+    );
+  }, [editing, objetivos.data]);
 
   // Indexa o resumo por distribuição para passar os números calculados
   // direto pro CardCategoria sem fazer lookup em cada render.
@@ -135,6 +151,36 @@ export function PlanejamentoPage() {
         </section>
       )}
 
+      {resumo.data && Number(resumo.data.total_gastos_fixos) > 0 && (
+        <section className="flex items-start gap-3 rounded-lg border bg-muted/40 p-3 text-sm">
+          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Repeat className="h-3.5 w-3.5" />
+          </span>
+          <div className="min-w-0 space-y-1">
+            <p className="font-medium">
+              Gastos recorrentes alimentam o envelope <em>Fixo</em>{" "}
+              automaticamente
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Hoje você tem{" "}
+              <strong className="text-foreground tabular-nums">
+                {formatCurrency(resumo.data.total_gastos_fixos)}/mês
+              </strong>{" "}
+              em obrigações fixas, composto por{" "}
+              <strong className="text-foreground">
+                {resumo.data.composicao_fixos.length}
+              </strong>{" "}
+              {resumo.data.composicao_fixos.length === 1
+                ? "gasto recorrente"
+                : "gastos recorrentes"}
+              . Marque um gasto como recorrente em <em>Gastos</em> e ele
+              aparece aqui sem trabalho manual.
+            </p>
+          </div>
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        </section>
+      )}
+
       <ChartCard
         title="Como sua renda está distribuída"
         description="Soma das categorias planejadas vs. saldo livre."
@@ -145,6 +191,11 @@ export function PlanejamentoPage() {
           saldoRestante={Number(resumo.data?.saldo_restante ?? 0)}
         />
       </ChartCard>
+
+      <PainelComportamental
+        comportamental={resumo.data?.comportamental}
+        loading={resumo.isLoading}
+      />
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
@@ -187,6 +238,7 @@ export function PlanejamentoPage() {
                 index={idx}
                 distribuicao={item}
                 resumo={resumoPorId.get(item.id)}
+                composicaoFixos={resumo.data?.composicao_fixos}
                 onEdit={setEditing}
                 onDelete={setDeleting}
               />
@@ -199,8 +251,8 @@ export function PlanejamentoPage() {
         open={creating}
         onOpenChange={setCreating}
         submitting={create.isPending}
-        onSubmit={async (values) => {
-          await create.mutateAsync(values);
+        onSubmit={async ({ distribuicao: payload }) => {
+          await create.mutateAsync(payload);
           setCreating(false);
         }}
       />
@@ -209,10 +261,16 @@ export function PlanejamentoPage() {
         open={Boolean(editing)}
         onOpenChange={(open) => !open && setEditing(null)}
         distribuicao={editing}
-        submitting={update.isPending}
-        onSubmit={async (values) => {
+        objetivoLinkado={objetivoLinkado}
+        submitting={update.isPending || updateObjetivo.isPending}
+        onSubmit={async ({ distribuicao: payload, objetivoUpdate }) => {
           if (!editing) return;
-          await update.mutateAsync({ id: editing.id, payload: values });
+          // Atualiza a distribuição primeiro; depois o objetivo linkado, se houver.
+          // O backend já recalcula o resumo automaticamente via invalidate.
+          await update.mutateAsync({ id: editing.id, payload });
+          if (objetivoUpdate) {
+            await updateObjetivo.mutateAsync(objetivoUpdate);
+          }
           setEditing(null);
         }}
       />
