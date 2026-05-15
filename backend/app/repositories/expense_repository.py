@@ -135,6 +135,15 @@ class ExpenseRepository:
         self.db.refresh(expense)
         return expense
 
+    def bulk_create(self, expenses: list[Expense]) -> None:
+        """Insere vários gastos com um único commit — usado pelo CSV import
+        para evitar uma transação por linha (importação de 5k linhas saía de
+        ~5k round-trips para 1)."""
+        if not expenses:
+            return
+        self.db.add_all(expenses)
+        self.db.commit()
+
     def update(
         self,
         expense: Expense,

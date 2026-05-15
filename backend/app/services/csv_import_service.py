@@ -18,6 +18,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.models.expense import Expense
 from app.repositories.expense_repository import ExpenseRepository
 from app.schemas.expense import CSVImportResult, CSVImportRowError, ExpenseCreate
 from app.utils.enums import ExpenseCategory
@@ -95,7 +96,7 @@ class CSVImportService:
             )
 
         errors: list[CSVImportRowError] = []
-        imported = 0
+        to_insert: list[Expense] = []
 
         for row_number, row in rows:
             try:
@@ -111,18 +112,21 @@ class CSVImportService:
                 )
                 continue
 
-            self.expenses.create(
-                user_id=user_id,
-                title=payload.title,
-                amount=payload.amount,
-                category=payload.category.value,
-                recurring=payload.recurring,
+            to_insert.append(
+                Expense(
+                    user_id=user_id,
+                    title=payload.title,
+                    amount=payload.amount,
+                    category=payload.category.value,
+                    recurring=payload.recurring,
+                )
             )
-            imported += 1
+
+        self.expenses.bulk_create(to_insert)
 
         return CSVImportResult(
             received_rows=len(rows),
-            imported=imported,
+            imported=len(to_insert),
             skipped=len(errors),
             errors=errors,
         )

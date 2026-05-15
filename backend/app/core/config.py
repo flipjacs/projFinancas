@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     rate_limit_default: str = Field(default="120/minute")
     rate_limit_auth: str = Field(default="10/minute")
     rate_limit_write: str = Field(default="60/minute")
+    # Só confie em X-Forwarded-For quando o app estiver atrás de um proxy
+    # reverso controlado (ex.: nginx do docker-compose). Em deploys diretos
+    # esse header é forjável e permitiria bypass do rate limit por IP.
+    trust_forwarded_for: bool = Field(default=False)
 
     # ---- Cache ----
     cache_default_ttl_seconds: int = Field(default=60, ge=0)

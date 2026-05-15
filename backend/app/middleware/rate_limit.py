@@ -17,10 +17,17 @@ from app.core.config import settings
 
 
 def _key_func(request: Request) -> str:
-    """Per-IP key. If a trusted reverse proxy sets X-Forwarded-For we honor it."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
+    """Per-IP rate-limit key.
+
+    Confiamos em `X-Forwarded-For` apenas quando `TRUST_FORWARDED_FOR=true`
+    — caso contrário um cliente direto poderia rotacionar o header e burlar
+    o limite por IP. Em produção, ative isso somente quando o app estiver
+    atrás de um proxy reverso controlado que escreve esse header.
+    """
+    if settings.trust_forwarded_for:
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
     return get_remote_address(request)
 
 

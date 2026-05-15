@@ -60,10 +60,15 @@ def create_app() -> FastAPI:
     # vêm depois.
     app.add_middleware(RequestLoggingMiddleware)
     install_rate_limiting(app)
+    # CORS: o navegador rejeita silenciosamente `allow_credentials=True`
+    # combinado com `*`. Como o frontend autentica via header Authorization
+    # (não cookie), deixamos credentials desligado quando a lista é wildcard.
+    cors_origins = settings.cors_origins_list
+    cors_allow_credentials = cors_origins != ["*"]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins_list,
-        allow_credentials=True,
+        allow_origins=cors_origins,
+        allow_credentials=cors_allow_credentials,
         allow_methods=["*"],
         allow_headers=["*"],
     )
