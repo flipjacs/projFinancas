@@ -1,10 +1,28 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: financeiro_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_pass}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-financeiro_db}
+      MYSQL_USER: ${MYSQL_USER:-financeiro}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-financeiro_pass}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_pass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   redis:
     image: redis:7-alpine
     container_name: financeiro_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -16,33 +34,35 @@ services:
     container_name: financeiro_backend
     restart: unless-stopped
     depends_on:
+      mysql:
+        condition: service_healthy
       redis:
         condition: service_healthy
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    env_file:
-      - ./backend/.env
     environment:
+      APP_ENV: ${APP_ENV:-development}
+      DEBUG: ${DEBUG:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://financeiro:financeiro_pass@mysql:3306/financeiro_db}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-to-a-long-random-string}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-60}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     ports:
-      - "8000:8000"
-    # Bind mount is convenient for dev (auto-reload via uvicorn). Drop it for
-    # prod-style runs to use the image's baked-in code.
-    volumes:
-      - ./backend:/app:z
+      - "${BACKEND_PORT:-8000}:8000"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 20s
+      start_period: 30s
 
   frontend:
     build:
       context: ./frontend
       args:
-        # Empty string keeps the bundle on same-origin requests, which nginx
-        # then reverse-proxies to the backend service below.
+        # String vazia mantém as requisições same-origin; o nginx do container
+        # faz reverse-proxy de /api/v1 para o serviço backend.
         VITE_API_URL: ""
     container_name: financeiro_frontend
     restart: unless-stopped
@@ -50,10 +70,12 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "5173:80"
+      - "${FRONTEND_PORT:-5173}:80"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 5s
       retries: 3
 
+volumes:
+  mysql_data:

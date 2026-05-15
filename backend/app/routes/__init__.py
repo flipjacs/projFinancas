@@ -12,8 +12,7 @@ from app.routes import (
     users,
 )
 
-# All business routes live under /api/v1. Health endpoints stay at the root
-# because orchestrators historically poke /health.
+
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth.router)
 api_router.include_router(users.router)

@@ -1,54 +1,161 @@
-# Financeiro — Sistema de Planejamento Pessoal
+# Sistema de Planejamento Financeiro Pessoal
 
-Projeto full-stack para controle de finanças pessoais. Fui montando ele para estudar
-backend de verdade (FastAPI + SQLAlchemy + JWT + testes) e depois plugando um frontend
-em React/Vite para deixar mais apresentável.
+Aplicação full-stack para controle e planejamento de finanças pessoais. O usuário
+cadastra renda, gastos e parcelamentos, define limites por categoria e objetivos
+financeiros, e o sistema responde perguntas práticas como *"posso comprar isso?"*
+analisando o impacto da compra no orçamento do mês.
 
-A ideia é simples: o usuário cadastra salário, gastos e parcelamentos, e o sistema
-responde perguntas tipo *"posso comprar isso aí?"* analisando o impacto da compra
-na renda do mês.
+> Projeto desenvolvido como estudo pessoal e portfólio — foco em arquitetura limpa,
+> testes automatizados e fluxo de execução simples para qualquer máquina.
 
-```
-.
-├── backend/             API em FastAPI + SQLAlchemy + Alembic + pytest
-├── frontend/            SPA em React 18 + Vite + TypeScript + Tailwind
-└── docker-compose.yml   sobe tudo com um comando só
-```
+---
 
-Cada lado tem o próprio README com mais detalhes:
+## Descrição
 
-- [`backend/README.md`](./backend/README.md) — arquitetura, endpoints, variáveis de ambiente
-- [`frontend/README.md`](./frontend/README.md) — componentes, fluxo de dados, scripts
+O sistema combina quatro frentes:
+
+- **Controle financeiro** — cadastro de gastos com categorias, importação via CSV
+  e visualizações em gráficos (por categoria e por mês).
+- **Planejamento financeiro** — distribuição da renda mensal entre categorias,
+  acompanhamento de quanto foi gasto vs. o limite definido e alertas quando o
+  usuário se aproxima do teto.
+- **Modo Disciplina** — pontuação, sequências e avisos para reforçar hábitos de
+  contenção de gastos.
+- **Objetivos financeiros** — metas (ex.: reserva de emergência, viagem) com
+  progresso baseado em aportes e tempo restante.
+
+Cobertura adicional:
+
+- Cadastro de compras parceladas com projeção de saldo futuro.
+- Análise *"Posso comprar isso?"* — nível de risco, impacto no mês e sugestões
+  mais seguras.
+- Autenticação JWT, rate limit por rota e cache opcional via Redis.
+
+---
+
+## Tecnologias usadas
+
+### Backend
+- **FastAPI** (Python 3.12) — framework web async
+- **SQLAlchemy 2 + Alembic** — ORM e migrações
+- **MySQL 8** — banco principal
+- **Pydantic v2** — validação e settings
+- **JWT (python-jose)** — autenticação
+- **slowapi** — rate limiting
+- **Redis** (opcional) — cache distribuído
+- **pytest** — 111+ testes em SQLite em memória
+
+### Frontend
+- **React 18 + TypeScript**
+- **Vite** — build tool
+- **TailwindCSS** + Radix UI — design system
+- **React Query** — cache de dados do servidor
+- **Zustand** — estado global de auth
+- **Recharts** — gráficos
+- **React Hook Form + Zod** — formulários e validação
+
+### Infra
+- **Docker** + **docker compose** — orquestração local
+- **nginx** — serve o bundle do front e faz reverse-proxy para a API
+- Build multi-stage, containers não-root, healthchecks em todos os serviços
 
 ---
 
 ## Funcionalidades
 
-- 📋 Cadastro e login com JWT
-- 💰 CRUD de gastos com categorias e import via CSV
-- 📅 Cadastro de compras parceladas com projeção de saldo futuro
+- 🔐 Cadastro e login com JWT, hash de senha com bcrypt
+- 💰 CRUD de gastos com categorias e importação via CSV
+- 📅 Compras parceladas com projeção de saldo futuro
 - 📊 Painel com gráficos de gastos por categoria e por mês
-- 🤔 Análise *"Posso comprar isso?"* com nível de risco, impacto no mês e sugestões mais seguras
+- 🤔 Análise *"Posso comprar isso?"* com nível de risco e sugestões
+- 🎯 Objetivos financeiros com progresso e prazo
+- 📈 Planejamento mensal — distribuição da renda por categoria com alertas
+- 🧘 Modo Disciplina — pontuação, sequência e limites comportamentais
 - 🌙 Tema claro/escuro
 - ⌨️ Atalhos de teclado (⌘K busca rápida, `g` + letra para navegar)
 
 ---
 
-## Como rodar
+## Estrutura do projeto
 
-### Modo Docker (mais fácil)
+```
+financeiro-system/
+├── backend/                  API FastAPI + SQLAlchemy + Alembic + pytest
+│   ├── app/
+│   │   ├── auth/             JWT, hashing, dependências de auth
+│   │   ├── core/             config (pydantic-settings) e logging
+│   │   ├── database/         engine, session, Base
+│   │   ├── middleware/       error handler, rate limit, request logger
+│   │   ├── models/           SQLAlchemy ORM
+│   │   ├── repositories/     camada de acesso a dados
+│   │   ├── routes/           endpoints HTTP
+│   │   ├── schemas/          Pydantic (request/response)
+│   │   ├── services/         regras de negócio
+│   │   ├── tests/            pytest (SQLite em memória)
+│   │   └── utils/            cache, enums
+│   ├── alembic/              migrações de banco
+│   ├── Dockerfile
+│   └── requirements.txt
+│
+├── frontend/                 SPA React + Vite + TypeScript + Tailwind
+│   ├── src/
+│   │   ├── components/       UI, charts, dialogs
+│   │   ├── contexts/         tema
+│   │   ├── hooks/            React Query hooks por domínio
+│   │   ├── layouts/          shell da app, sidebar, navbar
+│   │   ├── pages/            rotas
+│   │   ├── routes/           AppRouter
+│   │   ├── services/         clients HTTP (axios)
+│   │   ├── stores/           Zustand (auth)
+│   │   ├── styles/           Tailwind + globals
+│   │   ├── types/            tipos compartilhados
+│   │   └── utils/            formatação
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── package.json
+│
+├── docker-compose.yml        sobe MySQL + Redis + backend + frontend
+├── .env.example              variáveis de exemplo para o compose
+├── Makefile                  atalhos (up, down, logs, test, migrate)
+└── README.md
+```
+
+---
+
+## Como rodar localmente
+
+### Pré-requisitos
+
+- [Docker](https://docs.docker.com/get-docker/) **20.10+** e Docker Compose v2
+- (opcional) `make` para usar os atalhos do Makefile
+
+### Modo Docker — recomendado
 
 ```bash
-cp backend/.env.example backend/.env
+# 1. Clone o repositório
+git clone https://github.com/<seu-usuario>/financeiro-system.git
+cd financeiro-system
+
+# 2. Crie o arquivo de ambiente a partir do exemplo
+cp .env.example .env
+
+# 3. Suba tudo (MySQL + Redis + backend + frontend)
 docker compose up --build
 ```
 
-- Frontend: <http://localhost:5173>
-- API: <http://localhost:8000/api/v1>
-- Swagger: <http://localhost:8000/docs>
-- Health: <http://localhost:8000/health>
+Os serviços ficarão disponíveis em:
 
-Para resetar tudo (apaga o banco):
+| Serviço | URL |
+| --- | --- |
+| Frontend | <http://localhost:5173> |
+| API | <http://localhost:8000/api/v1> |
+| Swagger (docs) | <http://localhost:8000/docs> |
+| Healthcheck | <http://localhost:8000/health> |
+
+As migrações do Alembic rodam automaticamente no boot do backend — o banco
+fica pronto sem nenhum passo extra.
+
+Para resetar tudo (apaga o volume do MySQL):
 
 ```bash
 docker compose down -v
@@ -61,6 +168,7 @@ docker compose down -v
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
 alembic upgrade head
 uvicorn app.main:app --reload
 
@@ -70,52 +178,109 @@ npm install
 npm run dev
 ```
 
-O Vite já está configurado para dar proxy de `/api/v1` → `http://localhost:8000`,
-então não precisa mexer em CORS.
+O Vite já está configurado para fazer proxy de `/api/v1` para
+`http://localhost:8000`, então não há complicação com CORS no desenvolvimento.
+
+### Atalhos via Makefile
+
+```bash
+make up          # docker compose up --build
+make down        # docker compose down
+make logs        # tail dos logs
+make test        # roda pytest dentro do container do backend
+make migrate     # aplica migrações pendentes
+make clean       # down -v (apaga volume do MySQL)
+```
 
 ---
 
-## Stack
+## Documentação da API
 
-| Camada | Tech |
-| --- | --- |
-| Backend | Python 3.12 · FastAPI · SQLAlchemy 2 · Alembic · Pydantic v2 · slowapi · redis-py |
-| Frontend | React 18 · TypeScript · Vite · TailwindCSS · React Query · Zustand · Recharts |
-| Banco | MySQL 8 (principal) · Redis 7 (cache, opcional) |
-| Testes | pytest (111 testes, SQLite em memória) |
-| Infra | Docker · build multi-stage · containers não-root · healthchecks |
+A documentação interativa do Swagger UI fica em
+<http://localhost:8000/docs> após subir o backend. Os endpoints são agrupados
+em tags por domínio: `autenticação`, `usuários`, `gastos`, `parcelamentos`,
+`financeiro`, `análise financeira`, `disciplina`, `planejamento` e `saúde`.
+
+Para o esquema OpenAPI bruto: <http://localhost:8000/openapi.json>.
+
+---
+
+## Arquitetura
+
+A aplicação segue uma separação clara em camadas no backend:
+
+```
+routes → services → repositories → models (SQLAlchemy)
+        ↑
+        schemas (Pydantic)
+```
+
+- **Routes** apenas validam entrada/saída e delegam.
+- **Services** concentram regras de negócio (cálculos financeiros, análise
+  de risco, regras do modo disciplina).
+- **Repositories** isolam o acesso ao banco.
+- **Schemas** garantem contratos estáveis na fronteira HTTP.
+
+No frontend, cada domínio tem o próprio par `service` (HTTP) + `hook`
+(React Query) + páginas/componentes. O estado de servidor fica no React Query;
+apenas o estado de auth fica em uma store Zustand persistida.
+
+Em produção, o nginx do container do frontend faz reverse-proxy de `/api/v1`
+para o serviço `backend`, então o bundle usa URLs same-origin (sem CORS).
+
+---
+
+## Segurança
+
+- Senhas armazenadas com hash **bcrypt**
+- Tokens **JWT** com algoritmo e expiração configuráveis
+- Validação obrigatória de **JWT_SECRET_KEY** forte em produção
+- **Rate limit** por rota (slowapi), com limites diferenciados para auth/write
+- Headers CORS validados (em produção `*` é rejeitado)
+- Containers Docker **não-root** com builds multi-stage
+
+---
+
+## Testes
+
+```bash
+# Local
+cd backend
+pytest
+
+# Dentro do container
+docker compose exec backend pytest
+```
+
+Os testes usam SQLite em memória, então rodam rapidamente e não dependem do
+MySQL estar de pé.
 
 ---
 
 ## Screenshots
 
-> Adicione capturas reais em `docs/screenshots/` e referencie aqui.
+> Substitua pelos prints reais em `docs/screenshots/`.
 
-- `docs/screenshots/painel.png` — Painel principal
-- `docs/screenshots/gastos.png` — Página de gastos
-- `docs/screenshots/parcelamentos.png` — Lista de parcelamentos
-- `docs/screenshots/posso-comprar.png` — Análise "posso comprar?"
-
----
-
-## Estrutura
-
-Cada subprojeto é independente e tem o próprio Dockerfile, mas no `docker-compose.yml`
-os dois rodam juntos no mesmo network — o nginx do frontend faz reverse-proxy de
-`/api/v1` para o serviço `backend`, então o bundle usa URLs same-origin (sem CORS).
-
-Os testes do backend usam SQLite em memória para ficarem rápidos e independentes. O
-banco de verdade em produção é MySQL via SQLAlchemy.
+| | |
+| --- | --- |
+| ![Painel](docs/screenshots/painel.png) | ![Gastos](docs/screenshots/gastos.png) |
+| Painel principal | Página de gastos |
+| ![Parcelamentos](docs/screenshots/parcelamentos.png) | ![Posso comprar?](docs/screenshots/posso-comprar.png) |
+| Lista de parcelamentos | Análise *"Posso comprar?"* |
 
 ---
 
-## Próximos passos
+## Próximas melhorias
 
-- [ ] Modo Disciplina (limites de gasto + pontuação) — backend pronto, falta UI
-- [ ] Página de planejamento financeiro (resumo do mês + projeção futura)
 - [ ] Testes de componente no frontend (Vitest + Testing Library)
-- [ ] Deploy
+- [ ] Pipeline de CI (GitHub Actions) com lint + testes + build
+- [ ] Deploy automatizado (Fly.io ou Railway)
+- [ ] Exportação de relatórios em PDF
+- [ ] Notificações por e-mail quando o usuário atinge um limite
+- [ ] Internacionalização (en/pt-BR)
 
 ---
 
-Projeto desenvolvido como estudo pessoal e portfólio.
+## Licença
+
+Projeto desenvolvido para fins de estudo e portfólio.
