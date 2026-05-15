@@ -133,8 +133,8 @@ financeiro-system/
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/<seu-usuario>/financeiro-system.git
-cd financeiro-system
+git clone https://github.com/flipjacs/projFinancas.git
+cd projFinancas
 
 # 2. Crie o arquivo de ambiente a partir do exemplo
 cp .env.example .env
