@@ -257,18 +257,6 @@ MySQL estar de pé.
 
 ---
 
-## Screenshots
-
-> Substitua pelos prints reais em `docs/screenshots/`.
-
-| | |
-| --- | --- |
-| ![Painel](docs/screenshots/painel.png) | ![Gastos](docs/screenshots/gastos.png) |
-| Painel principal | Página de gastos |
-| ![Parcelamentos](docs/screenshots/parcelamentos.png) | ![Posso comprar?](docs/screenshots/posso-comprar.png) |
-| Lista de parcelamentos | Análise *"Posso comprar?"* |
-
----
 
 ## Próximas melhorias
 
