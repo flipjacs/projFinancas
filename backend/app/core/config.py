@@ -1,5 +1,8 @@
+import os
 from functools import lru_cache
 from typing import Literal
+
+from sqlalchemy.engine import make_url
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -21,6 +24,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        hide_input_in_errors=True,
     )
 
     # ---- App ----
@@ -32,9 +36,10 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(default="INFO")
 
     # ---- Database ----
-    database_url: str = Field(
-        default="mysql+pymysql://financeiro:financeiro_pass@mysql:3306/financeiro_db"
-    )
+    database_url: str = Field(min_length=1)
+    database_connect_timeout: int = Field(default=10, ge=1, le=60)
+    database_ssl: bool = Field(default=False)
+    database_ssl_ca: str | None = Field(default=None)
 
     # ---- Auth ----
     jwt_secret_key: str = Field(default="change-me", min_length=1)
@@ -42,7 +47,7 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = Field(default=60, ge=1, le=60 * 24 * 30)
 
     # ---- CORS ----
-    cors_origins: str = Field(default="*")
+    cors_origins: str = Field(default="http://localhost:5173,http://127.0.0.1:5173")
 
     # ---- Rate limiting ----
     rate_limit_enabled: bool = Field(default=True)
@@ -53,6 +58,8 @@ class Settings(BaseSettings):
     # reverso controlado (ex.: nginx do docker-compose). Em deploys diretos
     # esse header é forjável e permitiria bypass do rate limit por IP.
     trust_forwarded_for: bool = Field(default=False)
+
+    rate_limit_storage_uri: str | None = Field(default=None)
 
     # ---- Cache ----
     cache_default_ttl_seconds: int = Field(default=60, ge=0)
@@ -84,10 +91,16 @@ class Settings(BaseSettings):
                 )
             if self.debug:
                 raise ValueError("DEBUG must be false in production.")
-            if self.cors_origins.strip() == "*":
+            if "*" in self.cors_origins_list:
                 raise ValueError(
                     "CORS_ORIGINS must be an explicit allow-list in production."
                 )
+        if os.environ.get("VERCEL") == "1":
+            url = make_url(self.database_url)
+            if url.drivername != "mysql+pymysql" or not url.host or url.host.lower() in {"mysql", "localhost", "127.0.0.1", "::1"}:
+                raise ValueError("Vercel requires DATABASE_URL for an external MySQL host using mysql+pymysql.")
+            if any("<" in str(value) or ">" in str(value) for value in (url.username, url.password, url.host, url.database)):
+                raise ValueError("Replace DATABASE_URL placeholders with provider credentials.")
         return self
 
     @property

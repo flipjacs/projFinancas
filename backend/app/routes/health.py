@@ -47,8 +47,8 @@ def readiness(response: Response, db: Session = Depends(get_db)) -> ReadinessRes
         db.execute(text("SELECT 1"))
         components["database"] = ReadinessComponent(status="ok")
     except SQLAlchemyError as exc:
-        logger.warning("readiness DB ping failed: %s", exc)
-        components["database"] = ReadinessComponent(status="fail", detail=str(exc))
+        logger.warning("readiness DB ping failed (%s)", type(exc).__name__)
+        components["database"] = ReadinessComponent(status="fail", detail="Database connection failed")
 
     overall = (
         "ok"

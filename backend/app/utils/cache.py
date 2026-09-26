@@ -61,7 +61,7 @@ class RedisCache:
         # Imported lazily so the dependency isn't required when REDIS_URL is unset.
         import redis  # type: ignore[import-untyped]
 
-        self._client = redis.Redis.from_url(url, decode_responses=True)
+        self._client = redis.Redis.from_url(url, decode_responses=True, socket_connect_timeout=5, socket_timeout=5)
         self._client.ping()  # raises if Redis is unreachable
 
     def get(self, key: str) -> Any | None:

@@ -288,3 +288,7 @@ MySQL estar de pé.
 ## Licença
 
 Projeto desenvolvido para fins de estudo e portfólio.
+
+## Deploy na Vercel
+
+React/Vite e FastAPI no mesmo domínio, com MySQL externo: consulte [o guia completo](docs/vercel-deployment.md) para variáveis por ambiente, migrations, publicação e diagnóstico. A configuração usa Vercel Services (beta); Docker Compose continua disponível para a rede local. Rotacione qualquer senha exposta antes da publicação definitiva.

@@ -33,6 +33,7 @@ def _key_func(request: Request) -> str:
 
 limiter = Limiter(
     key_func=_key_func,
+    storage_uri=settings.rate_limit_storage_uri or settings.redis_url or "memory://",
     default_limits=[settings.rate_limit_default] if settings.rate_limit_enabled else [],
     enabled=settings.rate_limit_enabled,
 )
