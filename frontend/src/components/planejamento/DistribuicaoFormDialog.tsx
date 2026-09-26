@@ -51,13 +51,10 @@ const schema = z
     path: ["valor"],
     message: "Informe um valor maior que zero",
   })
-  .refine(
-    (v) => v.tipo_distribuicao !== "porcentagem" || v.porcentagem > 0,
-    {
-      path: ["porcentagem"],
-      message: "Informe uma porcentagem maior que zero",
-    },
-  )
+  .refine((v) => v.tipo_distribuicao !== "porcentagem" || v.porcentagem > 0, {
+    path: ["porcentagem"],
+    message: "Informe uma porcentagem maior que zero",
+  })
   .refine(
     (v) =>
       v.tipo_categoria !== "Objetivos" ||
@@ -68,9 +65,7 @@ const schema = z
     },
   )
   .refine(
-    (v) =>
-      v.tipo_categoria !== "Objetivos" ||
-      (v.objetivo_valor_meta ?? 0) > 0,
+    (v) => v.tipo_categoria !== "Objetivos" || (v.objetivo_valor_meta ?? 0) > 0,
     {
       path: ["objetivo_valor_meta"],
       message: "Informe o valor da meta",
@@ -78,8 +73,7 @@ const schema = z
   )
   .refine(
     (v) =>
-      v.tipo_categoria !== "Objetivos" ||
-      (v.objetivo_prazo_meses ?? 0) > 0,
+      v.tipo_categoria !== "Objetivos" || (v.objetivo_prazo_meses ?? 0) > 0,
     {
       path: ["objetivo_prazo_meses"],
       message: "Informe o prazo em meses",
@@ -209,7 +203,12 @@ export function DistribuicaoFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!submitting) onOpenChange(next);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -222,7 +221,18 @@ export function DistribuicaoFormDialog({
         </DialogHeader>
 
         <form
-          onSubmit={form.handleSubmit(handleSubmit)}
+          onSubmit={form.handleSubmit(async (values) => {
+            if (submitting) return;
+            form.clearErrors("root");
+            try {
+              await handleSubmit(values);
+            } catch {
+              form.setError("root", {
+                message:
+                  "Não foi possível salvar. Confira os dados e tente novamente.",
+              });
+            }
+          })}
           className="space-y-4"
           noValidate
         >
@@ -232,10 +242,16 @@ export function DistribuicaoFormDialog({
               id="categoria"
               autoFocus
               placeholder="ex.: Lazer mensal"
+              aria-invalid={!!form.formState.errors.categoria}
+              aria-describedby="categoria-error"
               {...form.register("categoria")}
             />
             {form.formState.errors.categoria && (
-              <p className="text-sm text-destructive">
+              <p
+                id="categoria-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {form.formState.errors.categoria.message}
               </p>
             )}
@@ -300,13 +316,19 @@ export function DistribuicaoFormDialog({
                 step="0.01"
                 min={0}
                 max={100}
+                aria-invalid={!!form.formState.errors.porcentagem}
+                aria-describedby="porcentagem-error"
                 {...form.register("porcentagem")}
               />
               <p className="text-xs text-muted-foreground">
                 A soma de todas as porcentagens não pode passar de 100%.
               </p>
               {form.formState.errors.porcentagem && (
-                <p className="text-sm text-destructive">
+                <p
+                  id="porcentagem-error"
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
                   {form.formState.errors.porcentagem.message}
                 </p>
               )}
@@ -320,10 +342,16 @@ export function DistribuicaoFormDialog({
                 inputMode="decimal"
                 step="0.01"
                 min={0}
+                aria-invalid={!!form.formState.errors.valor}
+                aria-describedby="valor-error"
                 {...form.register("valor")}
               />
               {form.formState.errors.valor && (
-                <p className="text-sm text-destructive">
+                <p
+                  id="valor-error"
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
                   {form.formState.errors.valor.message}
                 </p>
               )}
@@ -344,6 +372,8 @@ export function DistribuicaoFormDialog({
                   ? "ex.: Fundo Viagem, Tech, Reserva de emergência"
                   : "ex.: Streaming, Iguarias, Cursos"
               }
+              aria-invalid={!!form.formState.errors.subcategoria}
+              aria-describedby="subcategoria-error"
               {...form.register("subcategoria")}
             />
           </div>
@@ -362,6 +392,8 @@ export function DistribuicaoFormDialog({
               step="0.01"
               min={0}
               placeholder="0 = usar o valor planejado"
+              aria-invalid={!!form.formState.errors.limite_mensal}
+              aria-describedby="limite_mensal-error"
               {...form.register("limite_mensal")}
             />
             <p className="text-xs text-muted-foreground">
@@ -372,7 +404,9 @@ export function DistribuicaoFormDialog({
           {(mostraFormObjetivoNovo || editandoObjetivoLinkado) && (
             <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                {editandoObjetivoLinkado ? "Objetivo vinculado" : "Novo objetivo"}
+                {editandoObjetivoLinkado
+                  ? "Objetivo vinculado"
+                  : "Novo objetivo"}
               </p>
               <p className="text-xs text-muted-foreground">
                 {editandoObjetivoLinkado
@@ -384,10 +418,16 @@ export function DistribuicaoFormDialog({
                 <Input
                   id="objetivo_nome"
                   placeholder="ex.: iPhone 15 Pro"
+                  aria-invalid={!!form.formState.errors.objetivo_nome}
+                  aria-describedby="objetivo_nome-error"
                   {...form.register("objetivo_nome")}
                 />
                 {form.formState.errors.objetivo_nome && (
-                  <p className="text-sm text-destructive">
+                  <p
+                    id="objetivo_nome-error"
+                    role="alert"
+                    className="text-sm text-destructive"
+                  >
                     {form.formState.errors.objetivo_nome.message}
                   </p>
                 )}
@@ -401,10 +441,16 @@ export function DistribuicaoFormDialog({
                     inputMode="decimal"
                     step="0.01"
                     min={0}
+                    aria-invalid={!!form.formState.errors.objetivo_valor_meta}
+                    aria-describedby="objetivo_valor_meta-error"
                     {...form.register("objetivo_valor_meta")}
                   />
                   {form.formState.errors.objetivo_valor_meta && (
-                    <p className="text-sm text-destructive">
+                    <p
+                      id="objetivo_valor_meta-error"
+                      role="alert"
+                      className="text-sm text-destructive"
+                    >
                       {form.formState.errors.objetivo_valor_meta.message}
                     </p>
                   )}
@@ -417,6 +463,8 @@ export function DistribuicaoFormDialog({
                     inputMode="decimal"
                     step="0.01"
                     min={0}
+                    aria-invalid={!!form.formState.errors.objetivo_valor_atual}
+                    aria-describedby="objetivo_valor_atual-error"
                     {...form.register("objetivo_valor_atual")}
                   />
                 </div>
@@ -427,10 +475,16 @@ export function DistribuicaoFormDialog({
                     type="number"
                     min={1}
                     max={600}
+                    aria-invalid={!!form.formState.errors.objetivo_prazo_meses}
+                    aria-describedby="objetivo_prazo_meses-error"
                     {...form.register("objetivo_prazo_meses")}
                   />
                   {form.formState.errors.objetivo_prazo_meses && (
-                    <p className="text-sm text-destructive">
+                    <p
+                      id="objetivo_prazo_meses-error"
+                      role="alert"
+                      className="text-sm text-destructive"
+                    >
                       {form.formState.errors.objetivo_prazo_meses.message}
                     </p>
                   )}
@@ -439,16 +493,24 @@ export function DistribuicaoFormDialog({
             </div>
           )}
 
+          {form.formState.errors.root && (
+            <p role="alert" className="text-sm text-destructive">
+              {form.formState.errors.root.message}
+            </p>
+          )}
           <DialogFooter>
             <Button
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              disabled={submitting}
+              disabled={submitting || form.formState.isSubmitting}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button
+              type="submit"
+              disabled={submitting || form.formState.isSubmitting}
+            >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {isEdit ? "Salvar alterações" : "Adicionar categoria"}
             </Button>

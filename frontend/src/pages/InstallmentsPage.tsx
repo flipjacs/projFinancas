@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/StatCard";
 import { ChartCard } from "@/components/ChartCard";
+import { QueryErrorState } from "@/components/QueryErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import { InstallmentCard } from "@/components/installments/InstallmentCard";
 import { InstallmentFormDialog } from "@/components/installments/InstallmentFormDialog";
@@ -19,12 +20,14 @@ import { DeleteInstallmentDialog } from "@/components/installments/DeleteInstall
 import { FuturePaymentsChart } from "@/components/charts/FuturePaymentsChart";
 import {
   useInstallmentMutations,
-  useInstallments,
+  useAllInstallments,
 } from "@/hooks/useInstallments";
 import { useFutureBalance } from "@/hooks/useFinancial";
 import type { Installment } from "@/types/installment";
 import { formatCurrency } from "@/utils/format";
 import { cn } from "@/lib/utils";
+
+const EMPTY_INSTALLMENTS: Installment[] = [];
 
 type Filter = "active" | "all";
 
@@ -34,11 +37,11 @@ export function InstallmentsPage() {
   const [editing, setEditing] = useState<Installment | null>(null);
   const [deleting, setDeleting] = useState<Installment | null>(null);
 
-  const installmentsQuery = useInstallments({ limit: 200 });
+  const installmentsQuery = useAllInstallments();
   const futureQuery = useFutureBalance(12);
   const { create, update, remove } = useInstallmentMutations();
 
-  const installments = installmentsQuery.data ?? [];
+  const installments = installmentsQuery.data ?? EMPTY_INSTALLMENTS;
 
   const filtered = useMemo(() => {
     if (filter === "active") {
@@ -70,12 +73,20 @@ export function InstallmentsPage() {
   }, [installments]);
 
   const loading = installmentsQuery.isLoading;
+  if (installmentsQuery.isError)
+    return (
+      <QueryErrorState
+        error={installmentsQuery.error}
+        title="Não foi possível carregar os parcelamentos"
+        onRetry={() => void installmentsQuery.refetch()}
+      />
+    );
 
   return (
     <div className="space-y-8">
       <header className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Parcelamentos</h1>
+          <h1 className="page-heading">Parcelamentos</h1>
           <p className="text-sm text-muted-foreground">
             Acompanhe cada compra parcelada e o quanto ela compromete seus
             próximos meses.
@@ -87,7 +98,7 @@ export function InstallmentsPage() {
         </Button>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Parcelamentos ativos"
           value={loading ? "-" : String(stats.active)}
@@ -107,7 +118,7 @@ export function InstallmentsPage() {
           label="Saldo a pagar"
           value={loading ? "-" : formatCurrency(stats.outstanding)}
           icon={CreditCard}
-          tone={stats.outstanding > 0 ? "negative" : "positive"}
+          tone="default"
           loading={loading}
           hint="Total que ainda falta pagar."
         />
@@ -137,7 +148,14 @@ export function InstallmentsPage() {
           </span>
         }
       >
-        <FuturePaymentsChart months={futureQuery.data?.months ?? []} />
+        {futureQuery.isError ? (
+          <QueryErrorState
+            error={futureQuery.error}
+            onRetry={() => void futureQuery.refetch()}
+          />
+        ) : (
+          <FuturePaymentsChart months={futureQuery.data?.months ?? []} />
+        )}
       </ChartCard>
 
       <Card>
@@ -158,6 +176,7 @@ export function InstallmentsPage() {
                 <button
                   key={option}
                   type="button"
+                  aria-pressed={filter === option}
                   onClick={() => setFilter(option)}
                   className={cn(
                     "rounded-sm px-3 py-1 transition-colors",
@@ -173,7 +192,7 @@ export function InstallmentsPage() {
           </div>
 
           {loading ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-56 w-full rounded-lg" />
               ))}
@@ -188,7 +207,7 @@ export function InstallmentsPage() {
               }
               description={
                 filter === "active"
-                  ? "Todas as suas parcelas já foram quitadas — show. Cadastre quando tiver uma nova compra."
+                  ? "Nenhuma parcela em andamento. Cadastre uma compra para acompanhar seus próximos meses."
                   : "Cadastre suas compras parceladas para planejar melhor o caixa dos próximos meses."
               }
               action={
@@ -199,7 +218,7 @@ export function InstallmentsPage() {
               }
             />
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {filtered.map((installment, index) => (
                 <InstallmentCard
                   key={installment.id}

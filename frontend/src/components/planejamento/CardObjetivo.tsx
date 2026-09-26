@@ -4,6 +4,7 @@ import {
   MoreHorizontal,
   Pencil,
   Target,
+  Plus,
   Trash2,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -27,6 +28,7 @@ interface Props {
   distribuicaoLinkada?: Distribuicao;
   /** Valor mensal efetivo calculado pelo backend (usa salário quando %). */
   alocacaoMensal?: number;
+  onContribute: (objetivo: Objetivo) => void;
   onEdit: (objetivo: Objetivo) => void;
   onDelete: (objetivo: Objetivo) => void;
   index?: number;
@@ -37,6 +39,7 @@ export function CardObjetivo({
   distribuicaoLinkada,
   alocacaoMensal,
   onEdit,
+  onContribute,
   onDelete,
   index = 0,
 }: Props) {
@@ -48,7 +51,7 @@ export function CardObjetivo({
   return (
     <Card
       className={cn(
-        "group relative overflow-hidden transition-shadow duration-300 hover:shadow-lg animate-slide-up",
+        "group relative overflow-hidden transition-shadow duration-300 hover:border-primary/30 animate-slide-up",
         concluido && "border-emerald-500/60",
       )}
       style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
@@ -65,7 +68,8 @@ export function CardObjetivo({
               </h3>
               <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                 <CalendarDays className="h-3.5 w-3.5" />
-                desde {format(parseISO(objetivo.criado_em), "d 'de' MMM',' yyyy", {
+                desde{" "}
+                {format(parseISO(objetivo.criado_em), "d 'de' MMM',' yyyy", {
                   locale: ptBR,
                 })}
               </p>
@@ -75,7 +79,7 @@ export function CardObjetivo({
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                 <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Abrir menu</span>
+                <span className="sr-only">Ações de {objetivo.nome}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -94,8 +98,14 @@ export function CardObjetivo({
           </DropdownMenu>
         </header>
 
+        {distribuicaoLinkada && (
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Link2 className="h-3.5 w-3.5" />
+            Vinculado ao planejamento
+          </p>
+        )}
         <div>
-          <div className="flex items-baseline justify-between gap-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
             <span className="text-2xl font-semibold tabular-nums">
               {formatCurrency(objetivo.valor_atual)}
             </span>
@@ -105,7 +115,9 @@ export function CardObjetivo({
           </div>
           <div className="mt-3 space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium">{progresso.toFixed(0)}% completo</span>
+              <span className="font-medium">
+                {progresso.toFixed(0)}% completo
+              </span>
               <span className="text-muted-foreground">
                 {objetivo.prazo_meses}{" "}
                 {objetivo.prazo_meses === 1 ? "mês" : "meses"}
@@ -113,7 +125,9 @@ export function CardObjetivo({
             </div>
             <BarraProgresso
               percentual={progresso}
-              cor={concluido ? "#10b981" : "hsl(var(--primary))"}
+              mode="goal"
+              ariaLabel={`Progresso de ${objetivo.nome}`}
+              cor={concluido ? "var(--chart-goal)" : "hsl(var(--primary))"}
             />
           </div>
         </div>
@@ -126,7 +140,7 @@ export function CardObjetivo({
         >
           {concluido ? (
             <p className="font-medium text-emerald-700 dark:text-emerald-300">
-              🎉 Meta concluída! Parabéns.
+              Meta concluída.
             </p>
           ) : (
             <>
@@ -156,6 +170,16 @@ export function CardObjetivo({
             </>
           )}
         </div>
+        {!concluido && (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => onContribute(objetivo)}
+          >
+            <Plus className="h-4 w-4" />
+            Adicionar dinheiro
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

@@ -2,77 +2,280 @@
 @tailwind components;
 @tailwind utilities;
 
-/* shadcn/ui design tokens. Values follow the project's modern fintech feel:
-   slate background, indigo primary, generous spacing. */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
+    color-scheme: light;
+    --background: 150 8% 96.5%;
+    --background-subtle: 150 9% 92.5%;
+    --foreground: 150 8% 12%;
+    --foreground-secondary: 150 6% 30%;
+    --foreground-muted: 150 5% 35%;
+    --foreground-disabled: 150 3% 53%;
+    --card: 150 10% 99%;
+    --card-foreground: var(--foreground);
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 240 85% 60%;
+    --popover-foreground: var(--foreground);
+    --surface-inset: 150 9% 94.5%;
+    --surface-balance: 150 13% 95%;
+    --primary: 158 48% 26%;
     --primary-foreground: 0 0% 100%;
-
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
-
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-
-    --accent: 220 14% 96%;
-    --accent-foreground: 222 47% 11%;
-
-    --destructive: 0 72% 51%;
+    --primary-hover: 158 50% 22%;
+    --primary-active: 158 51% 19%;
+    --secondary: 150 8% 90%;
+    --secondary-foreground: var(--foreground);
+    --muted: 150 8% 93%;
+    --muted-foreground: var(--foreground-muted);
+    --accent: 150 12% 86%;
+    --accent-hover: 150 9% 89%;
+    --accent-active: 150 12% 82%;
+    --accent-subtle: 158 24% 92%;
+    --accent-foreground: var(--foreground);
+    --destructive: 0 57% 39%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 240 85% 60%;
-
-    --radius: 0.75rem;
+    --border-subtle: 150 7% 86%;
+    --border-default: 150 7% 78%;
+    --border-strong: 150 7% 61%;
+    --border: var(--border-default);
+    --input: 150 7% 54%;
+    --ring: var(--primary);
+    --success: var(--primary);
+    --warning: 36 80% 28%;
+    --info: 200 62% 30%;
+    --chart-grid: 150 7% 81%;
+    --chart-axis: var(--foreground-muted);
+    --chart-primary: var(--primary);
+    --chart-reference: 150 6% 40%;
+    --chart-bar: 150 9% 43%;
+    --chart-bar-opacity: 1;
+    --chart-point-fill: var(--primary);
+    --chart-point-stroke: var(--card);
+    --chart-point-width: 1.5;
+    --chart-goal: hsl(var(--primary));
+    --chart-free: #637287;
+    --card-shadow: 0 1px 2px hsl(150 10% 15% / 0.045);
+    --raised-shadow: 0 6px 20px hsl(150 10% 15% / 0.12);
+    --category-housing: #527567;
+    --category-food: #856a43;
+    --category-transport: #477581;
+    --category-health: #946060;
+    --category-education: #73698c;
+    --category-entertainment: #856c52;
+    --category-utilities: #506f74;
+    --category-shopping: #7f7041;
+    --category-savings: #236249;
+    --category-other: #68776f;
+    --radius: 0.5rem;
   }
-
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-
-    --card: 222 47% 9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 240 80% 70%;
-    --primary-foreground: 222 47% 11%;
-
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 33% 14%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 240 80% 70%;
+    color-scheme: dark;
+    --background: 150 5% 7%;
+    --foreground: 150 5% 94%;
+    --card: 150 4% 9%;
+    --card-foreground: 150 5% 94%;
+    --popover: 150 4% 12%;
+    --popover-foreground: 150 5% 94%;
+    --primary: 158 48% 59%;
+    --primary-foreground: 155 25% 9%;
+    --secondary: 150 4% 15%;
+    --secondary-foreground: 150 5% 94%;
+    --muted: 150 4% 13%;
+    --muted-foreground: 150 3% 65%;
+    --accent: 150 4% 17%;
+    --accent-foreground: 150 5% 94%;
+    --destructive: 0 65% 70%;
+    --destructive-foreground: 0 25% 10%;
+    --border: 150 3% 19%;
+    --input: 150 3% 32%;
+    --ring: 158 48% 59%;
+    --success: 158 48% 59%;
+    --warning: 38 64% 65%;
   }
-
+  /* Existing dark values remain the reference; new roles alias them. */
+  .dark {
+    --background-subtle: var(--card);
+    --foreground-secondary: var(--muted-foreground);
+    --foreground-muted: var(--muted-foreground);
+    --foreground-disabled: var(--muted-foreground);
+    --surface-inset: var(--muted);
+    --surface-balance: var(--card);
+    --primary-hover: var(--primary);
+    --primary-active: var(--primary);
+    --accent-hover: var(--accent);
+    --accent-active: var(--accent);
+    --accent-subtle: var(--accent);
+    --border-subtle: var(--border);
+    --border-default: var(--border);
+    --border-strong: var(--input);
+    --info: var(--foreground);
+    --chart-grid: var(--border);
+    --chart-axis: var(--muted-foreground);
+    --chart-primary: var(--primary);
+    --chart-reference: var(--muted-foreground);
+    --chart-bar: var(--muted-foreground);
+    --chart-bar-opacity: 0.25;
+    --chart-point-fill: 0 0% 100%;
+    --chart-point-stroke: var(--primary);
+    --chart-point-width: 0;
+    --chart-goal: #10b981;
+    --chart-free: #94a3b8;
+    --category-housing: #8eaba0;
+    --category-food: #b8aa8f;
+    --category-transport: #85a3aa;
+    --category-health: #bba0a0;
+    --category-education: #a6a3b5;
+    --category-entertainment: #b4a693;
+    --category-utilities: #819da0;
+    --category-shopping: #b8ad8e;
+    --category-savings: #64caa3;
+    --category-other: #939e98;
+    --card-shadow: none;
+    --raised-shadow: none;
+  }
+  :root,
+  .dark {
+    --surface: var(--card);
+    --surface-raised: var(--popover);
+    --surface-hover: var(--accent-hover);
+    --focus-ring: var(--ring);
+    --border-focus: var(--ring);
+    --text-primary: var(--foreground);
+    --text-secondary: var(--foreground-secondary);
+    --text-muted: var(--foreground-muted);
+    --danger: var(--destructive);
+  }
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family:
+      "Segoe UI",
+      -apple-system,
+      BlinkMacSystemFont,
+      Roboto,
+      Helvetica,
+      Arial,
+      sans-serif;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+    -webkit-font-smoothing: antialiased;
   }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    overflow-wrap: anywhere;
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 3px;
+  }
+  input,
+  textarea,
+  select {
+    min-width: 0;
+  }
+  input[type="checkbox"] {
+    accent-color: hsl(var(--primary));
+  }
+  ::selection {
+    background: hsl(var(--primary) / 0.25);
+  }
+}
+@layer components {
+  .page-heading {
+    @apply text-2xl font-semibold tracking-tight sm:text-3xl;
+  }
+  .page-description {
+    @apply mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground;
+  }
+  .section-label {
+    @apply text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground;
+  }
+  .metric-grid {
+    @apply grid gap-3 sm:grid-cols-2 xl:grid-cols-4;
+  }
+  .chart-frame {
+    @apply h-64 w-full min-w-0 sm:h-72;
+  }
+}
+@media (max-width: 639px) {
+  button,
+  [role="combobox"] {
+    min-height: 44px;
+  }
+  input:not([type="checkbox"]):not([type="radio"]) {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer components {
+  :root:not(.dark) .surface-sidebar {
+    background: hsl(var(--background-subtle));
+    border-color: hsl(var(--border-strong));
+  }
+  :root:not(.dark) .surface-topbar { background: hsl(var(--surface)); }
+  :root:not(.dark) .surface-card { box-shadow: var(--card-shadow); }
+  :root:not(.dark) .surface-balance {
+    background: hsl(var(--surface-balance));
+    border-color: hsl(var(--border-strong));
+    box-shadow: var(--card-shadow);
+  }
+  :root:not(.dark) .metric-label,
+  :root:not(.dark) .surface-sidebar .section-label { color: hsl(var(--foreground-secondary)); }
+  :root:not(.dark) .surface-sidebar a[aria-current="page"] {
+    background: hsl(var(--accent));
+    box-shadow: inset 0 0 0 1px hsl(var(--border-strong));
+  }
+  :root:not(.dark) .surface-sidebar a:not([aria-current]):hover {
+    background: hsl(var(--accent-hover));
+  }
+  :root:not(.dark) .surface-sidebar a:active { background: hsl(var(--accent-active)); }
+  :root:not(.dark) .theme-button-primary:hover { background: hsl(var(--primary-hover)); }
+  :root:not(.dark) .theme-button-primary:active { background: hsl(var(--primary-active)); }
+  :root:not(.dark) .theme-button:disabled {
+    opacity: 1;
+    background: hsl(var(--muted));
+    color: hsl(var(--foreground-disabled));
+    border-color: hsl(var(--border-subtle));
+  }
+  :root:not(.dark) input:disabled,
+  :root:not(.dark) select:disabled {
+    opacity: 1;
+    background: hsl(var(--surface-inset));
+    color: hsl(var(--foreground-disabled));
+  }
+  :root:not(.dark) .theme-period:hover { background: hsl(var(--accent-hover)); }
+  :root:not(.dark) .theme-period[aria-pressed="true"] {
+    background: hsl(var(--accent));
+    box-shadow: inset 0 0 0 1px hsl(var(--border-strong));
+  }
+  :root:not(.dark) .theme-period:active { background: hsl(var(--accent-active)); }
+  :root:not(.dark) [role="dialog"]:not(.surface-sidebar),
+  :root:not(.dark) [role="menu"],
+  :root:not(.dark) .surface-raised {
+    background: hsl(var(--surface-raised));
+    border-color: hsl(var(--border-strong));
+    box-shadow: var(--raised-shadow);
+  }
+  :root:not(.dark) .recharts-default-tooltip { box-shadow: var(--raised-shadow); }
+  :root:not(.dark) .recharts-legend-item-text { color: hsl(var(--foreground-secondary)) !important; }
+  :root:not(.dark) .text-emerald-600 { color: hsl(var(--success)); }
+  :root:not(.dark) .text-amber-600 { color: hsl(var(--warning)); }
+  :root:not(.dark) .text-red-600 { color: hsl(var(--destructive)); }
+  :root:not(.dark) .text-sky-700 { color: hsl(var(--info)); }
 }

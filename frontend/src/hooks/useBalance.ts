@@ -5,7 +5,12 @@ export const balanceKeys = {
   all: ["balance"] as const,
   current: () => [...balanceKeys.all, "current"] as const satisfies QueryKey,
   monthly: (year?: number, month?: number) =>
-    [...balanceKeys.all, "monthly", year ?? null, month ?? null] as const,
+    [
+      ...balanceKeys.all,
+      "monthly",
+      year ?? new Date().getFullYear(),
+      month ?? new Date().getMonth() + 1,
+    ] as const,
 };
 
 export function useCurrentBalance() {
@@ -23,7 +28,10 @@ export function useMonthlySummary(year?: number, month?: number) {
 }
 
 /** Build the (year, month) tuple `monthsBack` months before `today`. */
-function shiftMonth(today: Date, monthsBack: number): { year: number; month: number } {
+function shiftMonth(
+  today: Date,
+  monthsBack: number,
+): { year: number; month: number } {
   const d = new Date(today.getFullYear(), today.getMonth() - monthsBack, 1);
   return { year: d.getFullYear(), month: d.getMonth() + 1 };
 }

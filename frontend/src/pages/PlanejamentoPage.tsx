@@ -1,11 +1,20 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Info, PiggyBank, Plus, Repeat, Target, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  Info,
+  PiggyBank,
+  Plus,
+  Repeat,
+  Target,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/StatCard";
 import { ChartCard } from "@/components/ChartCard";
+import { QueryErrorState } from "@/components/QueryErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import { AlertaFinanceiroCard } from "@/components/planejamento/AlertaFinanceiro";
 import { CardCategoria } from "@/components/planejamento/CardCategoria";
@@ -21,7 +30,7 @@ import {
   useObjetivos,
   useResumoPlanejamento,
 } from "@/hooks/usePlanejamento";
-import type { Distribuicao } from "@/types/planejamento";
+import type { CategoriaResumo, Distribuicao } from "@/types/planejamento";
 import { formatCurrency } from "@/utils/format";
 
 export function PlanejamentoPage() {
@@ -50,7 +59,7 @@ export function PlanejamentoPage() {
   // Indexa o resumo por distribuição para passar os números calculados
   // direto pro CardCategoria sem fazer lookup em cada render.
   const resumoPorId = useMemo(() => {
-    const map = new Map<number, NonNullable<typeof resumo.data>["categorias"][number]>();
+    const map = new Map<number, CategoriaResumo>();
     resumo.data?.categorias.forEach((c) => map.set(c.distribuicao_id, c));
     return map;
   }, [resumo.data]);
@@ -59,18 +68,29 @@ export function PlanejamentoPage() {
   const lista = distribuicoes.data ?? [];
   const carregando = distribuicoes.isLoading || resumo.isLoading;
 
+  if (distribuicoes.isError || resumo.isError || objetivos.isError)
+    return (
+      <QueryErrorState
+        error={distribuicoes.error ?? resumo.error ?? objetivos.error}
+        title="Não foi possível carregar o planejamento"
+        onRetry={() => {
+          void distribuicoes.refetch();
+          void resumo.refetch();
+          void objetivos.refetch();
+        }}
+      />
+    );
+
   return (
     <div className="space-y-8">
       <header className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Planejamento financeiro
-          </h1>
+          <h1 className="page-heading">Planejamento financeiro</h1>
           <p className="text-sm text-muted-foreground">
             Distribua sua renda em categorias e acompanhe limites do mês.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="ghost" asChild>
             <Link to="/objetivos">
               <Target className="h-4 w-4" />
@@ -85,21 +105,17 @@ export function PlanejamentoPage() {
         </div>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Salário mensal"
-          value={
-            resumo.data ? formatCurrency(resumo.data.salario) : "-"
-          }
+          value={resumo.data ? formatCurrency(resumo.data.salario) : "-"}
           icon={Wallet}
           loading={resumo.isLoading}
         />
         <StatCard
           label="Total distribuído"
           value={
-            resumo.data
-              ? formatCurrency(resumo.data.total_distribuido)
-              : "-"
+            resumo.data ? formatCurrency(resumo.data.total_distribuido) : "-"
           }
           icon={PiggyBank}
           tone="default"
@@ -112,9 +128,7 @@ export function PlanejamentoPage() {
         />
         <StatCard
           label="Saldo restante"
-          value={
-            resumo.data ? formatCurrency(resumo.data.saldo_restante) : "-"
-          }
+          value={resumo.data ? formatCurrency(resumo.data.saldo_restante) : "-"}
           icon={Wallet}
           tone={
             resumo.data && Number(resumo.data.saldo_restante) < 0
@@ -135,6 +149,13 @@ export function PlanejamentoPage() {
         />
       </div>
 
+      {alertas.isError && (
+        <QueryErrorState
+          error={alertas.error}
+          title="Não foi possível carregar os alertas"
+          onRetry={() => void alertas.refetch()}
+        />
+      )}
       {listaAlertas.length > 0 && (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-muted-foreground">
@@ -173,8 +194,8 @@ export function PlanejamentoPage() {
               {resumo.data.composicao_fixos.length === 1
                 ? "gasto recorrente"
                 : "gastos recorrentes"}
-              . Marque um gasto como recorrente em <em>Gastos</em> e ele
-              aparece aqui sem trabalho manual.
+              . Marque um gasto como recorrente em <em>Gastos</em> e ele aparece
+              aqui sem trabalho manual.
             </p>
           </div>
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -202,12 +223,14 @@ export function PlanejamentoPage() {
           <h2 className="text-base font-semibold">Categorias</h2>
           <p className="text-xs text-muted-foreground">
             {lista.length}{" "}
-            {lista.length === 1 ? "categoria cadastrada" : "categorias cadastradas"}
+            {lista.length === 1
+              ? "categoria cadastrada"
+              : "categorias cadastradas"}
           </p>
         </div>
 
         {carregando ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Card key={i}>
                 <CardContent className="space-y-4 p-5">
@@ -231,7 +254,7 @@ export function PlanejamentoPage() {
             }
           />
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {lista.map((item, idx) => (
               <CardCategoria
                 key={item.id}

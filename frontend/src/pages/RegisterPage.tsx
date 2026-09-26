@@ -9,7 +9,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,7 +51,9 @@ export function RegisterPage() {
       navigate("/painel", { replace: true });
     } catch (err) {
       const message =
-        err instanceof ApiError ? err.message : "Não foi possível criar a conta.";
+        err instanceof ApiError
+          ? err.message
+          : "Não foi possível criar a conta.";
       setServerError(message);
     }
   }
@@ -60,7 +61,9 @@ export function RegisterPage() {
   return (
     <Card>
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl">Crie sua conta</CardTitle>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Crie sua conta
+        </h1>
         <CardDescription>
           Comece a acompanhar suas finanças em poucos segundos.
         </CardDescription>
@@ -69,9 +72,21 @@ export function RegisterPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Nome</Label>
-            <Input id="name" autoComplete="name" {...register("name")} />
+            <Input
+              id="name"
+              autoComplete="name"
+              aria-invalid={!!errors.name}
+              aria-describedby="name-error"
+              {...register("name")}
+            />
             {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
+              <p
+                id="name-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {errors.name.message}
+              </p>
             )}
           </div>
 
@@ -82,10 +97,18 @@ export function RegisterPage() {
               type="email"
               autoComplete="email"
               placeholder="voce@exemplo.com"
+              aria-invalid={!!errors.email}
+              aria-describedby="email-error"
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <p
+                id="email-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {errors.email.message}
+              </p>
             )}
           </div>
 
@@ -95,10 +118,16 @@ export function RegisterPage() {
               id="password"
               type="password"
               autoComplete="new-password"
+              aria-invalid={!!errors.password}
+              aria-describedby="password-error"
               {...register("password")}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">
+              <p
+                id="password-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {errors.password.message}
               </p>
             )}
@@ -112,10 +141,16 @@ export function RegisterPage() {
               inputMode="decimal"
               step="0.01"
               min={0}
+              aria-invalid={!!errors.monthly_salary}
+              aria-describedby="monthly_salary-error"
               {...register("monthly_salary")}
             />
             {errors.monthly_salary && (
-              <p className="text-sm text-destructive">
+              <p
+                id="monthly_salary-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {errors.monthly_salary.message}
               </p>
             )}
@@ -132,13 +167,16 @@ export function RegisterPage() {
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Criar conta
+            {isSubmitting ? "Criando conta..." : "Criar conta"}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
             Já tem uma conta?{" "}
-            <Link to="/login" className="font-medium text-primary hover:underline">
-              Entrar
+            <Link
+              to="/login"
+              className="font-medium text-primary hover:underline"
+            >
+              {isSubmitting ? "Entrando..." : "Entrar"}
             </Link>
           </p>
         </form>

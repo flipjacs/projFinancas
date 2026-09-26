@@ -37,6 +37,10 @@ const ObjetivosPage = lazy(() =>
   import("@/pages/ObjetivosPage").then((m) => ({ default: m.ObjetivosPage })),
 );
 
+const DisciplinePage = lazy(() =>
+  import("@/pages/DisciplinePage").then((m) => ({ default: m.DisciplinePage })),
+);
+
 export function AppRouter() {
   return (
     <Routes>
@@ -59,6 +63,8 @@ export function AppRouter() {
           <Route path="/planejamento" element={<PlanejamentoPage />} />
           <Route path="/objetivos" element={<ObjetivosPage />} />
           <Route path="/posso-comprar" element={<CanIBuyPage />} />
+          <Route path="/disciplina" element={<DisciplinePage />} />
+          <Route path="/perfil" element={<SettingsPage profileOnly />} />
           <Route path="/configuracoes" element={<SettingsPage />} />
         </Route>
       </Route>

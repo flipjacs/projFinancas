@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { planejamentoService } from "@/services/planejamento.service";
 import type {
@@ -31,8 +27,9 @@ function reportError(action: string) {
 
 // ---------- Distribuições ----------
 
-export function useDistribuicoes() {
+export function useDistribuicoes(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: planejamentoKeys.distribuicoes(),
     queryFn: () => planejamentoService.listarDistribuicoes(),
   });
@@ -56,8 +53,13 @@ export function useDistribuicaoMutations() {
   });
 
   const update = useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: DistribuicaoUpdate }) =>
-      planejamentoService.atualizarDistribuicao(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: DistribuicaoUpdate;
+    }) => planejamentoService.atualizarDistribuicao(id, payload),
     onSuccess: () => {
       toast.success("Categoria atualizada.");
       invalidate();
@@ -90,7 +92,8 @@ export function useObjetivoMutations() {
   const qc = useQueryClient();
 
   function invalidate() {
-    qc.invalidateQueries({ queryKey: planejamentoKeys.objetivos() });
+    qc.invalidateQueries({ queryKey: planejamentoKeys.all });
+    qc.invalidateQueries({ queryKey: ["discipline"] });
   }
 
   const create = useMutation({

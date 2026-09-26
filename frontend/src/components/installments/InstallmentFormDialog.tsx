@@ -120,7 +120,12 @@ export function InstallmentFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!submitting) onOpenChange(next);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -134,7 +139,18 @@ export function InstallmentFormDialog({
         </DialogHeader>
 
         <form
-          onSubmit={form.handleSubmit(handleSubmit)}
+          onSubmit={form.handleSubmit(async (values) => {
+            if (submitting) return;
+            form.clearErrors("root");
+            try {
+              await handleSubmit(values);
+            } catch {
+              form.setError("root", {
+                message:
+                  "Não foi possível salvar. Confira os dados e tente novamente.",
+              });
+            }
+          })}
           className="space-y-4"
           noValidate
         >
@@ -144,10 +160,16 @@ export function InstallmentFormDialog({
               id="product_name"
               autoFocus
               placeholder="ex.: Notebook novo"
+              aria-invalid={!!form.formState.errors.product_name}
+              aria-describedby="product_name-error"
               {...form.register("product_name")}
             />
             {form.formState.errors.product_name && (
-              <p className="text-sm text-destructive">
+              <p
+                id="product_name-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {form.formState.errors.product_name.message}
               </p>
             )}
@@ -162,10 +184,16 @@ export function InstallmentFormDialog({
                 inputMode="decimal"
                 step="0.01"
                 min={0}
+                aria-invalid={!!form.formState.errors.total_amount}
+                aria-describedby="total_amount-error"
                 {...form.register("total_amount")}
               />
               {form.formState.errors.total_amount && (
-                <p className="text-sm text-destructive">
+                <p
+                  id="total_amount-error"
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
                   {form.formState.errors.total_amount.message}
                 </p>
               )}
@@ -176,10 +204,16 @@ export function InstallmentFormDialog({
               <Input
                 id="purchase_date"
                 type="date"
+                aria-invalid={!!form.formState.errors.purchase_date}
+                aria-describedby="purchase_date-error"
                 {...form.register("purchase_date")}
               />
               {form.formState.errors.purchase_date && (
-                <p className="text-sm text-destructive">
+                <p
+                  id="purchase_date-error"
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
                   {form.formState.errors.purchase_date.message}
                 </p>
               )}
@@ -194,10 +228,16 @@ export function InstallmentFormDialog({
                 type="number"
                 min={1}
                 max={360}
+                aria-invalid={!!form.formState.errors.total_installments}
+                aria-describedby="total_installments-error"
                 {...form.register("total_installments")}
               />
               {form.formState.errors.total_installments && (
-                <p className="text-sm text-destructive">
+                <p
+                  id="total_installments-error"
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
                   {form.formState.errors.total_installments.message}
                 </p>
               )}
@@ -210,10 +250,16 @@ export function InstallmentFormDialog({
                 type="number"
                 min={0}
                 max={360}
+                aria-invalid={!!form.formState.errors.remaining_installments}
+                aria-describedby="remaining_installments-error"
                 {...form.register("remaining_installments")}
               />
               {form.formState.errors.remaining_installments && (
-                <p className="text-sm text-destructive">
+                <p
+                  id="remaining_installments-error"
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
                   {form.formState.errors.remaining_installments.message}
                 </p>
               )}
@@ -232,18 +278,30 @@ export function InstallmentFormDialog({
             </p>
           </div>
 
+          {form.formState.errors.root && (
+            <p role="alert" className="text-sm text-destructive">
+              {form.formState.errors.root.message}
+            </p>
+          )}
           <DialogFooter>
             <Button
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              disabled={submitting}
+              disabled={submitting || form.formState.isSubmitting}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button
+              type="submit"
+              disabled={submitting || form.formState.isSubmitting}
+            >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isEdit ? "Salvar alterações" : "Adicionar parcelamento"}
+              {submitting
+                ? "Salvando..."
+                : isEdit
+                  ? "Salvar alterações"
+                  : "Adicionar parcelamento"}
             </Button>
           </DialogFooter>
         </form>

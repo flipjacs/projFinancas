@@ -4,7 +4,8 @@ import type { RiskLevel } from "@/types/financial";
 
 const RISK_STYLES: Record<RiskLevel, string> = {
   low: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300",
-  medium: "bg-amber-500/10 text-amber-700 ring-amber-500/30 dark:text-amber-300",
+  medium:
+    "bg-amber-500/10 text-amber-700 ring-amber-500/30 dark:text-amber-300",
   high: "bg-red-500/10 text-red-700 ring-red-500/30 dark:text-red-300",
 };
 

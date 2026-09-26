@@ -26,6 +26,22 @@ export function useInstallments(params: InstallmentListParams = {}) {
   });
 }
 
+// Fetch every page before calculating totals, so large histories are never truncated.
+export function useAllInstallments() {
+  return useQuery({
+    queryKey: [...installmentKeys.all, "complete-list"],
+    queryFn: async ({ signal }) => {
+      const records = [];
+      const limit = 100;
+      for (let skip = 0; ; skip += limit) {
+        const page = await installmentService.list({ skip, limit }, signal);
+        records.push(...page);
+        if (page.length < limit) return records;
+      }
+    },
+  });
+}
+
 export function useInstallmentMutations() {
   const qc = useQueryClient();
 
@@ -33,6 +49,8 @@ export function useInstallmentMutations() {
     qc.invalidateQueries({ queryKey: installmentKeys.all });
     qc.invalidateQueries({ queryKey: ["financial"] });
     qc.invalidateQueries({ queryKey: ["balance"] });
+    qc.invalidateQueries({ queryKey: ["discipline"] });
+    qc.invalidateQueries({ queryKey: ["planejamento"] });
   }
 
   function reportError(action: string) {
@@ -46,7 +64,8 @@ export function useInstallmentMutations() {
   }
 
   const create = useMutation({
-    mutationFn: (payload: InstallmentCreate) => installmentService.create(payload),
+    mutationFn: (payload: InstallmentCreate) =>
+      installmentService.create(payload),
     onSuccess: () => {
       toast.success("Parcelamento adicionado.");
       invalidateAll();

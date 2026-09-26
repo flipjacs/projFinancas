@@ -16,7 +16,10 @@ export function Progress({
   animated = true,
   ariaLabel,
 }: ProgressProps) {
-  const clamped = Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
+  const clamped = Math.max(
+    0,
+    Math.min(100, Number.isFinite(value) ? value : 0),
+  );
   return (
     <div
       role="progressbar"

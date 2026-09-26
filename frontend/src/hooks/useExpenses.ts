@@ -1,5 +1,6 @@
 import {
   useMutation,
+  useInfiniteQuery,
   useQuery,
   useQueryClient,
   type QueryKey,
@@ -27,6 +28,17 @@ export function useExpenses(params: ExpenseListParams = {}) {
   });
 }
 
+export function useExpensePages() {
+  return useInfiniteQuery({
+    queryKey: [...expenseKeys.all, "pages"],
+    initialPageParam: 0,
+    queryFn: ({ pageParam, signal }) =>
+      expenseService.list({ skip: pageParam, limit: 50 }, signal),
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length === 50 ? pages.length * 50 : undefined,
+  });
+}
+
 /**
  * Junta as mutations de criar/editar/excluir num só hook para que as
  * páginas não precisem duplicar a invalidação de cache + toasts.
@@ -37,6 +49,8 @@ export function useExpenseMutations() {
   function invalidateAll() {
     qc.invalidateQueries({ queryKey: expenseKeys.all });
     qc.invalidateQueries({ queryKey: ["balance"] });
+    qc.invalidateQueries({ queryKey: ["financial"] });
+    qc.invalidateQueries({ queryKey: ["discipline"] });
     // Gastos recorrentes alimentam o envelope "Fixo" automaticamente —
     // qualquer mudança (criar, editar, excluir, ligar/desligar recurring)
     // exige refetch do planejamento e dos alertas.

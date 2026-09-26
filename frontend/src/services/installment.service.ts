@@ -7,8 +7,8 @@ import type {
 } from "@/types/installment";
 
 export const installmentService = {
-  async list(params: InstallmentListParams = {}): Promise<Installment[]> {
-    const { data } = await api.get<Installment[]>("/installments", { params });
+  async list(params: InstallmentListParams = {}, signal?: AbortSignal): Promise<Installment[]> {
+    const { data } = await api.get<Installment[]>("/installments", { params, signal });
     return data;
   },
 

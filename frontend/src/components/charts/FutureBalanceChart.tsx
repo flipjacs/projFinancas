@@ -56,28 +56,29 @@ export function FutureBalanceChart({ months }: Props) {
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 16, right: 12, bottom: 0, left: -8 }}>
+        <LineChart
+          data={data}
+          margin={{ top: 16, right: 12, bottom: 0, left: -8 }}
+        >
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="hsl(var(--border))"
+            stroke="hsl(var(--chart-grid))"
             vertical={false}
           />
           <XAxis
             dataKey="label"
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--chart-axis))"
             tickLine={false}
             axisLine={false}
             fontSize={12}
           />
           <YAxis
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--chart-axis))"
             tickLine={false}
             axisLine={false}
             fontSize={12}
             tickFormatter={(v: number) =>
-              v >= 1000 || v <= -1000
-                ? `${Math.round(v / 1000)}k`
-                : String(v)
+              v >= 1000 || v <= -1000 ? `${Math.round(v / 1000)}k` : String(v)
             }
           />
           <Tooltip
@@ -89,14 +90,18 @@ export function FutureBalanceChart({ months }: Props) {
               fontSize: 12,
               color: "hsl(var(--popover-foreground))",
             }}
-            formatter={(value) => [formatCurrency(Number(value)), "Saldo projetado"]}
+            formatter={(value) => [
+              formatCurrency(Number(value)),
+              "Saldo projetado",
+            ]}
           />
           <ReferenceLine
             y={0}
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--chart-axis))"
             strokeDasharray="4 4"
           />
           <Line
+            isAnimationActive={false}
             type="monotone"
             dataKey="balance"
             stroke="hsl(var(--primary))"

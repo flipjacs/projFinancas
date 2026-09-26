@@ -17,9 +17,7 @@ export function QueryErrorState({ error, onRetry, title }: Props) {
   const message =
     error instanceof ApiError
       ? error.message
-      : error instanceof Error
-        ? error.message
-        : "Não foi possível carregar esta seção.";
+      : "Verifique sua conexão e tente novamente.";
 
   return (
     <div
@@ -30,7 +28,9 @@ export function QueryErrorState({ error, onRetry, title }: Props) {
         <CloudOff className="h-5 w-5" />
       </span>
       <div className="space-y-1">
-        <p className="text-sm font-medium">{title ?? "Falha ao carregar os dados"}</p>
+        <p className="text-sm font-medium">
+          {title ?? "Falha ao carregar os dados"}
+        </p>
         <p className="max-w-sm text-xs text-muted-foreground">{message}</p>
       </div>
       {onRetry && (

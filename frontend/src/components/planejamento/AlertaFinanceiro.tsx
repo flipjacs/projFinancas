@@ -23,8 +23,7 @@ const ESTILOS: Record<
     iconClass: "text-amber-600 dark:text-amber-400",
   },
   reserva_baixa: {
-    wrapper:
-      "border-sky-500/40 bg-sky-500/10 text-sky-800 dark:text-sky-200",
+    wrapper: "border-sky-500/40 bg-sky-500/10 text-sky-800 dark:text-sky-200",
     icon: Info,
     iconClass: "text-sky-600 dark:text-sky-400",
   },

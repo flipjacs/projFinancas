@@ -35,7 +35,7 @@ export function GraficoDistribuicao({ categorias, saldoRestante }: Props) {
         name: "Livre",
         rawTipo: "Livre",
         value: saldoRestante,
-        cor: "#94a3b8",
+        cor: "var(--chart-free)",
       });
     }
     return linhas;
@@ -56,6 +56,7 @@ export function GraficoDistribuicao({ categorias, saldoRestante }: Props) {
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
+            isAnimationActive={false}
             data={dados}
             dataKey="value"
             nameKey="name"
@@ -80,7 +81,9 @@ export function GraficoDistribuicao({ categorias, saldoRestante }: Props) {
             formatter={(value, name, payload) => {
               const tipo = payload?.payload?.rawTipo as string | undefined;
               const label =
-                tipo && tipo !== "Livre" ? `${name} (${labelDoTipo(tipo)})` : name;
+                tipo && tipo !== "Livre"
+                  ? `${name} (${labelDoTipo(tipo)})`
+                  : name;
               return [formatCurrency(Number(value)), label];
             }}
           />

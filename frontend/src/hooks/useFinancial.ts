@@ -7,9 +7,18 @@ import { ApiError } from "@/types/api";
 export const financialKeys = {
   all: ["financial"] as const,
   monthSummary: (year?: number, month?: number) =>
-    [...financialKeys.all, "month-summary", year ?? null, month ?? null] as const,
+    [
+      ...financialKeys.all,
+      "month-summary",
+      year ?? null,
+      month ?? null,
+    ] as const,
   futureBalance: (months: number) =>
-    [...financialKeys.all, "future-balance", months] as const satisfies QueryKey,
+    [
+      ...financialKeys.all,
+      "future-balance",
+      months,
+    ] as const satisfies QueryKey,
 };
 
 export function useMonthSummary(year?: number, month?: number) {
@@ -33,7 +42,7 @@ export function useCanIBuy() {
       const message =
         error instanceof ApiError
           ? error.message
-          : "Could not analyze this purchase.";
+          : "Não foi possível analisar esta compra.";
       toast.error(message);
     },
   });

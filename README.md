@@ -143,23 +143,39 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Os serviços ficarão disponíveis em:
-
-| Serviço | URL |
-| --- | --- |
-| Frontend | <http://localhost:5173> |
-| API | <http://localhost:8000/api/v1> |
-| Swagger (docs) | <http://localhost:8000/docs> |
-| Healthcheck | <http://localhost:8000/health> |
-
-As migrações do Alembic rodam automaticamente no boot do backend — o banco
-fica pronto sem nenhum passo extra.
-
-Para resetar tudo (apaga o volume do MySQL):
+Na primeira configuração, substitua `JWT_SECRET_KEY` em `.env` por uma chave aleatória (o arquivo não deve ser versionado):
 
 ```bash
-docker compose down -v
+python3 -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
+
+Para servir o build em segundo plano e reconstruir após alterações:
+
+```bash
+docker compose up -d --build
+```
+
+Em seguida, `docker compose up -d` inicia as imagens já construídas. Migrações rodam automaticamente antes da API; o frontend aguarda o backend saudável. Os serviços reiniciam automaticamente com o Docker.
+
+| Acesso | URL |
+| --- | --- |
+| Nesta máquina | <http://localhost:5173> |
+| Outra máquina na mesma rede | `http://IP_DA_MAQUINA:5173` |
+| API, somente nesta máquina | <http://localhost:8000/api/v1> |
+| Swagger, somente nesta máquina | <http://localhost:8000/docs> |
+| Saúde do banco via frontend | <http://localhost:5173/health/ready> |
+
+Use `hostname -I` para localizar o IP privado. `FRONTEND_BIND=0.0.0.0` publica o frontend na rede; `FRONTEND_PORT` altera a porta. O navegador usa `/api/v1` na mesma origem, encaminhado pelo Nginx, portanto não é necessário configurar o IP da API no frontend. `CORS_ORIGINS` é uma lista explícita; acrescente a origem local se precisar acessar a API diretamente de outra origem.
+
+Se o firewall bloquear a conexão, permita a porta TCP escolhida apenas para sua sub-rede. Não é necessário encaminhar portas no roteador. Este modo usa HTTP na rede local; exposição à internet exige HTTPS e configuração de produção apropriada.
+
+```bash
+docker compose ps                 # conferir saúde dos serviços
+docker compose logs -f backend frontend
+docker compose down               # parar preservando o banco
+```
+
+O volume `mysql_data` preserva contas e lançamentos. Não use `docker compose down -v` para um deploy normal: esse comando apaga o banco. Credenciais MySQL existentes devem permanecer iguais ao recriar containers; as variáveis de inicialização não alteram senhas de um volume já populado.
 
 ### Modo local (hot reload nos dois lados)
 

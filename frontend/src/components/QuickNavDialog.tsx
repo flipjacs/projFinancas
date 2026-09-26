@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { NAV_ITEMS } from "@/layouts/nav";
 import { cn } from "@/lib/utils";
 
@@ -25,16 +21,14 @@ export function QuickNavDialog({ open, onOpenChange }: Props) {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
 
-  const items = useMemo(
-    () => NAV_ITEMS.filter((item) => !item.disabled),
-    [],
-  );
+  const items = useMemo(() => NAV_ITEMS.filter((item) => !item.disabled), []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return items;
     return items.filter(
-      (i) => i.label.toLowerCase().includes(q) || i.to.toLowerCase().includes(q),
+      (i) =>
+        i.label.toLowerCase().includes(q) || i.to.toLowerCase().includes(q),
     );
   }, [items, query]);
 

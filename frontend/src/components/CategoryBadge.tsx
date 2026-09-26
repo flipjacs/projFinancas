@@ -2,19 +2,18 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { ExpenseCategory } from "@/types/expense";
 
-// Cor fixa para cada categoria, escolhida para ficar legível tanto no
-// tema claro quanto no escuro. Usada em badges, gráficos e tabelas.
+// Semantic palette with separate light values and unchanged dark colors.
 export const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
-  housing: "#6366f1", // indigo
-  food: "#f97316", // laranja
-  transport: "#06b6d4", // ciano
-  health: "#ef4444", // vermelho
-  education: "#8b5cf6", // violeta
-  entertainment: "#ec4899", // rosa
-  utilities: "#0ea5e9", // azul
-  shopping: "#f59e0b", // âmbar
-  savings: "#10b981", // verde
-  other: "#64748b", // cinza
+  housing: "var(--category-housing)",
+  food: "var(--category-food)",
+  transport: "var(--category-transport)",
+  health: "var(--category-health)",
+  education: "var(--category-education)",
+  entertainment: "var(--category-entertainment)",
+  utilities: "var(--category-utilities)",
+  shopping: "var(--category-shopping)",
+  savings: "var(--category-savings)",
+  other: "var(--category-other)",
 };
 
 // Os valores em inglês continuam no backend (housing, food, etc.) — só
@@ -40,16 +39,15 @@ interface CategoryBadgeProps {
 export function CategoryBadge({ category, className }: CategoryBadgeProps) {
   const color =
     CATEGORY_COLORS[category as ExpenseCategory] ?? CATEGORY_COLORS.other;
-  const label =
-    CATEGORY_LABELS[category as ExpenseCategory] ?? category;
+  const label = CATEGORY_LABELS[category as ExpenseCategory] ?? category;
   return (
     <Badge
       variant="outline"
       className={cn("gap-1.5", className)}
       style={{
-        borderColor: `${color}40`,
-        backgroundColor: `${color}14`,
-        color,
+        borderColor: `color-mix(in srgb, ${color} 25.098%, transparent)`,
+        backgroundColor: `color-mix(in srgb, ${color} 7.843%, transparent)`,
+        color: "hsl(var(--foreground))",
       }}
     >
       <span

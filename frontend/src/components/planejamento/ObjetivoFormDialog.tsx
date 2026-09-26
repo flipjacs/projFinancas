@@ -100,7 +100,12 @@ export function ObjetivoFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!submitting) onOpenChange(next);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -113,7 +118,18 @@ export function ObjetivoFormDialog({
         </DialogHeader>
 
         <form
-          onSubmit={form.handleSubmit(handleSubmit)}
+          onSubmit={form.handleSubmit(async (values) => {
+            if (submitting) return;
+            form.clearErrors("root");
+            try {
+              await handleSubmit(values);
+            } catch {
+              form.setError("root", {
+                message:
+                  "Não foi possível salvar. Confira os dados e tente novamente.",
+              });
+            }
+          })}
           className="space-y-4"
           noValidate
         >
@@ -123,10 +139,16 @@ export function ObjetivoFormDialog({
               id="nome"
               autoFocus
               placeholder="ex.: iPhone 15 Pro"
+              aria-invalid={!!form.formState.errors.nome}
+              aria-describedby="nome-error"
               {...form.register("nome")}
             />
             {form.formState.errors.nome && (
-              <p className="text-sm text-destructive">
+              <p
+                id="nome-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {form.formState.errors.nome.message}
               </p>
             )}
@@ -141,10 +163,16 @@ export function ObjetivoFormDialog({
                 inputMode="decimal"
                 step="0.01"
                 min={0}
+                aria-invalid={!!form.formState.errors.valor_meta}
+                aria-describedby="valor_meta-error"
                 {...form.register("valor_meta")}
               />
               {form.formState.errors.valor_meta && (
-                <p className="text-sm text-destructive">
+                <p
+                  id="valor_meta-error"
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
                   {form.formState.errors.valor_meta.message}
                 </p>
               )}
@@ -158,10 +186,16 @@ export function ObjetivoFormDialog({
                 inputMode="decimal"
                 step="0.01"
                 min={0}
+                aria-invalid={!!form.formState.errors.valor_atual}
+                aria-describedby="valor_atual-error"
                 {...form.register("valor_atual")}
               />
               {form.formState.errors.valor_atual && (
-                <p className="text-sm text-destructive">
+                <p
+                  id="valor_atual-error"
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
                   {form.formState.errors.valor_atual.message}
                 </p>
               )}
@@ -175,10 +209,16 @@ export function ObjetivoFormDialog({
               type="number"
               min={1}
               max={600}
+              aria-invalid={!!form.formState.errors.prazo_meses}
+              aria-describedby="prazo_meses-error"
               {...form.register("prazo_meses")}
             />
             {form.formState.errors.prazo_meses && (
-              <p className="text-sm text-destructive">
+              <p
+                id="prazo_meses-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {form.formState.errors.prazo_meses.message}
               </p>
             )}
@@ -195,18 +235,30 @@ export function ObjetivoFormDialog({
             </div>
           </div>
 
+          {form.formState.errors.root && (
+            <p role="alert" className="text-sm text-destructive">
+              {form.formState.errors.root.message}
+            </p>
+          )}
           <DialogFooter>
             <Button
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              disabled={submitting}
+              disabled={submitting || form.formState.isSubmitting}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button
+              type="submit"
+              disabled={submitting || form.formState.isSubmitting}
+            >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isEdit ? "Salvar alterações" : "Criar objetivo"}
+              {submitting
+                ? "Salvando..."
+                : isEdit
+                  ? "Salvar alterações"
+                  : "Criar objetivo"}
             </Button>
           </DialogFooter>
         </form>

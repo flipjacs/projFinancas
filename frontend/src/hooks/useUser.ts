@@ -14,12 +14,16 @@ export function useUpdateProfile() {
     onSuccess: (user) => {
       setUser(user);
       qc.invalidateQueries({ queryKey: ["balance"] });
+      qc.invalidateQueries({ queryKey: ["discipline"] });
+      qc.invalidateQueries({ queryKey: ["planejamento"] });
       qc.invalidateQueries({ queryKey: ["financial"] });
       toast.success("Perfil atualizado.");
     },
     onError: (error: unknown) => {
       const message =
-        error instanceof ApiError ? error.message : "Não foi possível atualizar o perfil.";
+        error instanceof ApiError
+          ? error.message
+          : "Não foi possível atualizar o perfil.";
       toast.error(message);
     },
   });

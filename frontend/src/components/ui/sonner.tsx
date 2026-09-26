@@ -11,7 +11,9 @@ export function Toaster(props: ToasterProps) {
       richColors
       closeButton
       position="top-right"
+      containerAriaLabel="Notificações"
       toastOptions={{
+        closeButtonAriaLabel: "Fechar notificação",
         classNames: {
           toast:
             "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",

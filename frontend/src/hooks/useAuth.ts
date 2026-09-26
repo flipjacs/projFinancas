@@ -1,77 +1,116 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { setUnauthorizedHandler, tokenStorage } from "@/lib/api";
+import { queryClient } from "@/lib/queryClient";
+import { tokenExpiresAt } from "@/lib/session";
 import { userService } from "@/services/user.service";
 import { authService } from "@/services/auth.service";
 import type { LoginRequest, RegisterRequest } from "@/types/auth";
 
-/**
- * Convenience hook exposing a flat auth API for components.
- * Also installs the global 401 handler that clears state when the
- * backend invalidates our token.
- */
-export function useAuth() {
-  const { token, user, hydrated, setToken, setUser, setHydrated, logout } =
-    useAuthStore();
-
-  useEffect(() => {
-    setUnauthorizedHandler(() => {
-      useAuthStore.getState().logout();
+function logout(expired = false) {
+  // Cancel/remove in-flight reads and all cached financial data before another login.
+  queryClient.clear();
+  useAuthStore.getState().logout();
+  useAuthStore.setState({ sessionExpired: expired });
+}
+let bootstrapPromise: Promise<void> | null = null;
+let bootstrapToken: string | null = null;
+export function bootstrapSession(): Promise<void> {
+  const token = useAuthStore.getState().token;
+  if (bootstrapPromise && bootstrapToken === token) return bootstrapPromise;
+  if (!token) {
+    useAuthStore.setState({ hydrated: true });
+    return Promise.resolve();
+  }
+  if (tokenExpiresAt(token) <= Date.now()) {
+    logout(true);
+    return Promise.resolve();
+  }
+  useAuthStore.setState({ hydrated: false, bootstrapError: false });
+  bootstrapToken = token;
+  bootstrapPromise = userService
+    .me()
+    .then((user) => {
+      if (useAuthStore.getState().token === token)
+        useAuthStore.setState({ user, hydrated: true });
+    })
+    .catch(() => {
+      if (useAuthStore.getState().token === token)
+        useAuthStore.setState({ bootstrapError: true });
+    })
+    .finally(() => {
+      if (bootstrapToken === token) bootstrapPromise = null;
     });
-    return () => setUnauthorizedHandler(null);
-  }, []);
+  return bootstrapPromise;
+}
 
-  // On first mount: if we have a persisted token, validate it by fetching /me.
+// Mount once at the app root, never in each consumer of useAuth.
+export function useSessionLifecycle() {
+  const token = useAuthStore((state) => state.token);
   useEffect(() => {
-    let cancelled = false;
-    async function bootstrap() {
-      const persistedToken = useAuthStore.getState().token ?? tokenStorage.get();
-      if (!persistedToken) {
-        setHydrated(true);
+    setUnauthorizedHandler(() => logout(true));
+    void bootstrapSession();
+    const sync = (event: StorageEvent) => {
+      if (event.key !== "fp:token" && event.key !== null) return;
+      const persisted = tokenStorage.get();
+      if (persisted === useAuthStore.getState().token) return;
+      queryClient.clear();
+      useAuthStore.setState({ token: persisted, user: null, hydrated: false });
+      void bootstrapSession();
+    };
+    window.addEventListener("storage", sync);
+    return () => {
+      setUnauthorizedHandler(null);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+  useEffect(() => {
+    if (!token) return;
+    let timer: number;
+    const scheduleExpiry = () => {
+      const remaining = tokenExpiresAt(token) - Date.now();
+      if (remaining <= 0) {
+        logout(true);
         return;
       }
-      try {
-        const me = await userService.me();
-        if (!cancelled) {
-          setUser(me);
-          setHydrated(true);
-        }
-      } catch {
-        if (!cancelled) {
-          logout();
-          setHydrated(true);
-        }
-      }
-    }
-    if (!hydrated) {
-      bootstrap();
-    }
-    return () => {
-      cancelled = true;
+      timer = window.setTimeout(scheduleExpiry, Math.min(remaining, 2_147_483_647));
     };
-    // hydrated intentionally excluded — bootstrap runs once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    scheduleExpiry();
+    const check = () => {
+      if (tokenExpiresAt(token) <= Date.now()) logout(true);
+    };
+    window.addEventListener("focus", check);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", check);
+    };
+  }, [token]);
+}
 
+export function useAuth() {
+  const state = useAuthStore();
   async function login(payload: LoginRequest) {
     const tokens = await authService.login(payload);
-    setToken(tokens.access_token);
-    const me = await userService.me();
-    setUser(me);
+    queryClient.clear();
+    state.setToken(tokens.access_token);
+    try {
+      const user = await userService.me();
+      if (useAuthStore.getState().token !== tokens.access_token) return;
+      useAuthStore.setState({ user, hydrated: true });
+    } catch (error) {
+      if (useAuthStore.getState().token === tokens.access_token) logout();
+      throw error;
+    }
   }
-
   async function register(payload: RegisterRequest) {
     await authService.register(payload);
     await login({ email: payload.email, password: payload.password });
   }
-
   return {
-    token,
-    user,
-    hydrated,
-    isAuthenticated: Boolean(token && user),
+    ...state,
+    isAuthenticated: Boolean(state.token && state.user),
     login,
     register,
-    logout,
+    logout: () => logout(),
   };
 }

@@ -55,7 +55,14 @@ export function DeleteInstallmentDialog({
           </Button>
           <Button
             variant="destructive"
-            onClick={onConfirm}
+            onClick={async () => {
+              if (submitting) return;
+              try {
+                await onConfirm();
+              } catch {
+                /* Mutation hook reports the error and the dialog stays open. */
+              }
+            }}
             disabled={submitting || !installment}
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}

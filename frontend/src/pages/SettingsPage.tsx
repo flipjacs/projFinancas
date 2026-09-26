@@ -52,7 +52,11 @@ const THEME_OPTIONS: {
   { value: "system", label: "Sistema", icon: Monitor },
 ];
 
-export function SettingsPage() {
+export function SettingsPage({
+  profileOnly = false,
+}: {
+  profileOnly?: boolean;
+}) {
   const { user, logout } = useAuth();
   const updateProfile = useUpdateProfile();
   const { theme, setTheme } = useTheme();
@@ -77,18 +81,34 @@ export function SettingsPage() {
 
   async function saveProfile(values: ProfileValues) {
     if (values.name === user?.name) return;
-    await updateProfile.mutateAsync({ name: values.name });
+    try {
+      await updateProfile.mutateAsync({ name: values.name });
+    } catch {
+      profileForm.setError("root", {
+        message: "Não foi possível salvar o perfil.",
+      });
+    }
   }
 
   async function saveSalary(values: SalaryValues) {
     if (values.monthly_salary === Number(user?.monthly_salary)) return;
-    await updateProfile.mutateAsync({ monthly_salary: values.monthly_salary });
+    try {
+      await updateProfile.mutateAsync({
+        monthly_salary: values.monthly_salary,
+      });
+    } catch {
+      salaryForm.setError("root", {
+        message: "Não foi possível salvar a renda.",
+      });
+    }
   }
 
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Configurações</h1>
+        <h1 className="page-heading">
+          {profileOnly ? "Perfil" : "Configurações"}
+        </h1>
         <p className="text-sm text-muted-foreground">
           Edite seu perfil, salário e preferências do app.
         </p>
@@ -103,10 +123,16 @@ export function SettingsPage() {
                 Perfil
               </CardTitle>
               <CardDescription>
-                Seu nome de exibição. O email cadastrado não pode ser alterado aqui.
+                Seu nome de exibição. O email cadastrado não pode ser alterado
+                aqui.
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {profileForm.formState.errors.root && (
+                <p role="alert" className="mb-3 text-sm text-destructive">
+                  {profileForm.formState.errors.root.message}
+                </p>
+              )}
               <form
                 onSubmit={profileForm.handleSubmit(saveProfile)}
                 className="space-y-4"
@@ -114,7 +140,11 @@ export function SettingsPage() {
               >
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome de exibição</Label>
-                  <Input id="name" autoComplete="name" {...profileForm.register("name")} />
+                  <Input
+                    id="name"
+                    autoComplete="name"
+                    {...profileForm.register("name")}
+                  />
                   {profileForm.formState.errors.name && (
                     <p className="text-sm text-destructive">
                       {profileForm.formState.errors.name.message}
@@ -137,14 +167,13 @@ export function SettingsPage() {
                   <Button
                     type="submit"
                     disabled={
-                      updateProfile.isPending ||
-                      !profileForm.formState.isDirty
+                      updateProfile.isPending || !profileForm.formState.isDirty
                     }
                   >
                     {updateProfile.isPending && (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     )}
-                    Salvar perfil
+                    {updateProfile.isPending ? "Salvando..." : "Salvar perfil"}
                   </Button>
                 </div>
               </form>
@@ -162,6 +191,11 @@ export function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {salaryForm.formState.errors.root && (
+                <p role="alert" className="mb-3 text-sm text-destructive">
+                  {salaryForm.formState.errors.root.message}
+                </p>
+              )}
               <form
                 onSubmit={salaryForm.handleSubmit(saveSalary)}
                 className="space-y-4"
@@ -190,27 +224,27 @@ export function SettingsPage() {
                   <Button
                     type="submit"
                     disabled={
-                      updateProfile.isPending ||
-                      !salaryForm.formState.isDirty
+                      updateProfile.isPending || !salaryForm.formState.isDirty
                     }
                   >
                     {updateProfile.isPending && (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     )}
-                    Salvar salário
+                    {updateProfile.isPending ? "Salvando..." : "Salvar salário"}
                   </Button>
                 </div>
               </form>
             </CardContent>
           </Card>
 
-          <Card className="border-destructive/30">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-base text-destructive">
-                Zona de risco
+              <CardTitle className="text-base">
+                Sessão neste dispositivo
               </CardTitle>
               <CardDescription>
-                Faz logout neste dispositivo. Seus dados continuam salvos.
+                Encerre sua sessão neste dispositivo. Seus dados continuam
+                salvos.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -226,15 +260,14 @@ export function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Aparência</CardTitle>
-              <CardDescription>Escolha como o Financeiro aparece.</CardDescription>
+              <CardDescription>
+                Escolha como o Financeiro aparece.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-2">
                 {THEME_OPTIONS.map(({ value, label, icon: Icon }) => {
-                  const isActive =
-                    value === "system"
-                      ? false
-                      : value === theme;
+                  const isActive = value === "system" ? false : value === theme;
                   return (
                     <button
                       key={value}
@@ -274,10 +307,6 @@ export function SettingsPage() {
               <CardTitle className="text-base">Conta</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">ID</span>
-                <span className="font-mono text-xs">{user?.id ?? "-"}</span>
-              </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Conta criada em</span>
                 <span>

@@ -9,7 +9,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-financeiro}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-financeiro_pass}
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -39,17 +39,17 @@ services:
       redis:
         condition: service_healthy
     environment:
-      APP_ENV: ${APP_ENV:-development}
-      DEBUG: ${DEBUG:-true}
+      APP_ENV: ${APP_ENV:-production}
+      DEBUG: ${DEBUG:-false}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://financeiro:financeiro_pass@mysql:3306/financeiro_db}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-to-a-long-random-string}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Configure uma chave forte no arquivo .env}
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-60}
-      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/health/ready"]
       interval: 30s
@@ -70,9 +70,9 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "${FRONTEND_PORT:-5173}:80"
+      - "${FRONTEND_BIND:-0.0.0.0}:${FRONTEND_PORT:-5173}:80"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
       interval: 30s
       timeout: 5s
       retries: 3

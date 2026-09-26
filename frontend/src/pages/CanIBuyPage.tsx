@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { QueryErrorState } from "@/components/QueryErrorState";
 import { StatCard } from "@/components/StatCard";
 import { ChartCard } from "@/components/ChartCard";
 import { CommitmentBreakdownChart } from "@/components/charts/CommitmentBreakdownChart";
@@ -63,7 +64,11 @@ export function CanIBuyPage() {
       product_name: values.product_name || undefined,
     };
     setSubmitted(values);
-    await analysis.mutateAsync(payload);
+    try {
+      await analysis.mutateAsync(payload);
+    } catch {
+      /* The mutation shows a toast; the error state below remains retryable. */
+    }
   }
 
   const result = analysis.data;
@@ -74,16 +79,16 @@ export function CanIBuyPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Posso comprar isso?</h1>
+        <h1 className="page-heading">Posso comprar isso?</h1>
         <p className="text-sm text-muted-foreground">
           Simule uma compra e veja como ela impacta seu mês.
         </p>
       </header>
 
-      <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background">
+      <Card className="relative overflow-hidden">
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/10 blur-3xl"
+          className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full hidden"
         />
         <CardContent className="relative grid gap-6 p-6 sm:p-8">
           <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-primary">
@@ -165,6 +170,12 @@ export function CanIBuyPage() {
         </CardContent>
       </Card>
 
+      {analysis.isError && (
+        <QueryErrorState
+          error={analysis.error}
+          title="Não foi possível simular a compra"
+        />
+      )}
       {analysis.isPending && (
         <div className="space-y-4">
           <Skeleton className="h-32 w-full rounded-lg" />
@@ -177,7 +188,7 @@ export function CanIBuyPage() {
         </div>
       )}
 
-      {result && !analysis.isPending && (
+      {result && !analysis.isPending && !analysis.isError && (
         <div className="space-y-6">
           <VerdictCard result={result} />
 
@@ -243,7 +254,7 @@ export function CanIBuyPage() {
             <HealthScoreCard score={result.financial_health_score} />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               label="Salário"
               value={formatCurrency(result.salary)}
@@ -300,11 +311,18 @@ export function CanIBuyPage() {
               description="Comparando o seu saldo com e sem a compra."
               loading={futureBalance.isLoading}
             >
-              <SimulatedBalanceChart
-                months={futureBalance.data?.months ?? []}
-                extraInstallmentValue={Number(result.new_installment_value)}
-                purchaseInstallments={submitted?.installments ?? 0}
-              />
+              {futureBalance.isError ? (
+                <QueryErrorState
+                  error={futureBalance.error}
+                  onRetry={() => void futureBalance.refetch()}
+                />
+              ) : (
+                <SimulatedBalanceChart
+                  months={futureBalance.data?.months ?? []}
+                  extraInstallmentValue={Number(result.new_installment_value)}
+                  purchaseInstallments={submitted?.installments ?? 0}
+                />
+              )}
             </ChartCard>
           </div>
 
@@ -313,7 +331,7 @@ export function CanIBuyPage() {
         </div>
       )}
 
-      {!result && !analysis.isPending && (
+      {!result && !analysis.isPending && !analysis.isError && (
         <Card className="border-dashed bg-muted/30">
           <CardContent className="flex flex-col items-center gap-3 px-6 py-12 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">

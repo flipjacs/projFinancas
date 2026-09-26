@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { InstallmentFormDialog } from "@/components/installments/InstallmentFormDialog";
+import { useInstallmentMutations } from "@/hooks/useInstallments";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -31,12 +33,15 @@ import {
 import { useDistribuicoes } from "@/hooks/usePlanejamento";
 import { labelDoTipo } from "@/components/planejamento/cores";
 
-const COMPORTAMENTAL_OPTIONS = ["auto", ...CATEGORIAS_COMPORTAMENTAIS_EXPENSE] as const;
+const COMPORTAMENTAL_OPTIONS = [
+  "auto",
+  ...CATEGORIAS_COMPORTAMENTAIS_EXPENSE,
+] as const;
 
 const SEM_EARMARK = "sem_earmark";
 
 const schema = z.object({
-  title: z.string().min(1, "Descrição é obrigatória").max(180),
+  title: z.string().trim().min(1, "Descrição é obrigatória").max(180),
   amount: z.coerce
     .number({ invalid_type_error: "Valor precisa ser um número" })
     .min(0, "Valor não pode ser negativo"),
@@ -55,8 +60,7 @@ export type ExpenseFormValues = Omit<
   "categoria_comportamental" | "distribuicao_id"
 > & {
   categoria_comportamental:
-    | (typeof CATEGORIAS_COMPORTAMENTAIS_EXPENSE)[number]
-    | null;
+    (typeof CATEGORIAS_COMPORTAMENTAIS_EXPENSE)[number] | null;
   distribuicao_id: number | null;
 };
 
@@ -86,9 +90,11 @@ export function ExpenseFormDialog({
   submitting,
 }: ExpenseFormDialogProps) {
   const isEdit = Boolean(expense);
+  const [installmentMode, setInstallmentMode] = useState(false);
+  const installmentMutations = useInstallmentMutations();
   // Lista de envelopes do planejamento — alimenta o seletor de earmark.
   // Carregamento é cacheado pelo react-query, então abrir o dialog é rápido.
-  const distribuicoes = useDistribuicoes();
+  const distribuicoes = useDistribuicoes(open);
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(schema),
@@ -98,7 +104,10 @@ export function ExpenseFormDialog({
   // Reseta os valores sempre que o diálogo reabre — evita que dados
   // antigos vazem entre um ciclo de edição e outro.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setInstallmentMode(false);
+      return;
+    }
     if (expense) {
       form.reset({
         title: expense.title,
@@ -146,8 +155,26 @@ export function ExpenseFormDialog({
     } as ExpenseFormValues);
   }
 
+  if (installmentMode && !isEdit)
+    return (
+      <InstallmentFormDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        submitting={installmentMutations.create.isPending}
+        onSubmit={async (values) => {
+          await installmentMutations.create.mutateAsync(values);
+          onOpenChange(false);
+        }}
+      />
+    );
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!submitting) onOpenChange(next);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar gasto" : "Novo gasto"}</DialogTitle>
@@ -159,7 +186,18 @@ export function ExpenseFormDialog({
         </DialogHeader>
 
         <form
-          onSubmit={form.handleSubmit(handleSubmit)}
+          onSubmit={form.handleSubmit(async (values) => {
+            if (submitting) return;
+            form.clearErrors("root");
+            try {
+              await handleSubmit(values);
+            } catch {
+              form.setError("root", {
+                message:
+                  "Não foi possível salvar. Confira os dados e tente novamente.",
+              });
+            }
+          })}
           className="space-y-4"
           noValidate
         >
@@ -169,10 +207,16 @@ export function ExpenseFormDialog({
               id="title"
               autoFocus
               placeholder="ex.: Mercado"
+              aria-invalid={!!form.formState.errors.title}
+              aria-describedby="title-error"
               {...form.register("title")}
             />
             {form.formState.errors.title && (
-              <p className="text-sm text-destructive">
+              <p
+                id="title-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {form.formState.errors.title.message}
               </p>
             )}
@@ -187,10 +231,16 @@ export function ExpenseFormDialog({
                 inputMode="decimal"
                 step="0.01"
                 min={0}
+                aria-invalid={!!form.formState.errors.amount}
+                aria-describedby="amount-error"
                 {...form.register("amount")}
               />
               {form.formState.errors.amount && (
-                <p className="text-sm text-destructive">
+                <p
+                  id="amount-error"
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
                   {form.formState.errors.amount.message}
                 </p>
               )}
@@ -225,118 +275,180 @@ export function ExpenseFormDialog({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="categoria_comportamental">
-              Comportamento financeiro
-            </Label>
-            <Select
-              value={form.watch("categoria_comportamental")}
-              onValueChange={(value) =>
-                form.setValue(
-                  "categoria_comportamental",
-                  value as FormSchema["categoria_comportamental"],
-                  { shouldValidate: true },
-                )
-              }
-            >
-              <SelectTrigger id="categoria_comportamental">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">
-                  Automático (sugerido pela categoria)
-                </SelectItem>
-                {CATEGORIAS_COMPORTAMENTAIS_EXPENSE.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {LABEL_COMPORTAMENTAL_EXPENSE[c]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              McDonald's é <em>alimentação</em>, mas comportamentalmente é{" "}
-              <em>lazer</em>. Marque manualmente quando fizer sentido.
-            </p>
+          <div className="flex flex-wrap gap-4 rounded-md border p-3 text-sm">
+            <label className="flex min-h-8 items-center gap-2">
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                checked={categoriaSelecionada === "savings"}
+                onChange={(event) =>
+                  form.setValue(
+                    "category",
+                    event.target.checked ? "savings" : "other",
+                  )
+                }
+              />
+              Poupança / reserva
+            </label>
+            {!isEdit && (
+              <label className="flex min-h-8 items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={false}
+                  onChange={() => setInstallmentMode(true)}
+                />
+                Compra parcelada
+              </label>
+            )}
           </div>
+          <details
+            open={earmarkObrigatorio || undefined}
+            className="rounded-md border p-3"
+          >
+            <summary className="cursor-pointer py-1 text-sm font-medium">
+              Planejamento e classificação
+            </summary>
+            <div className="mt-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="categoria_comportamental">
+                  Comportamento financeiro
+                </Label>
+                <Select
+                  value={form.watch("categoria_comportamental")}
+                  onValueChange={(value) =>
+                    form.setValue(
+                      "categoria_comportamental",
+                      value as FormSchema["categoria_comportamental"],
+                      { shouldValidate: true },
+                    )
+                  }
+                >
+                  <SelectTrigger id="categoria_comportamental">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">
+                      Automático (sugerido pela categoria)
+                    </SelectItem>
+                    {CATEGORIAS_COMPORTAMENTAIS_EXPENSE.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {LABEL_COMPORTAMENTAL_EXPENSE[c]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  McDonald's é <em>alimentação</em>, mas comportamentalmente é{" "}
+                  <em>lazer</em>. Marque manualmente quando fizer sentido.
+                </p>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="distribuicao_id">
-              Direcionar para envelope{" "}
-              {earmarkObrigatorio ? (
-                <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                  · recomendado para Reserva/Objetivos
-                </span>
-              ) : (
-                <span className="text-xs font-normal text-muted-foreground">
-                  · opcional
-                </span>
-              )}
-            </Label>
-            <Select
-              value={form.watch("distribuicao_id")}
-              onValueChange={(value) =>
-                form.setValue("distribuicao_id", value, {
-                  shouldValidate: true,
-                })
-              }
-            >
-              <SelectTrigger id="distribuicao_id">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={SEM_EARMARK}>
-                  Sem direcionamento (categorização automática)
-                </SelectItem>
-                {(distribuicoes.data ?? []).map((d) => (
-                  <SelectItem key={d.id} value={String(d.id)}>
-                    {d.categoria}
-                    {d.subcategoria ? ` › ${d.subcategoria}` : ""}{" "}
-                    <span className="text-xs text-muted-foreground">
-                      ({labelDoTipo(d.tipo_categoria)})
+              <div className="space-y-2">
+                <Label htmlFor="distribuicao_id">
+                  Direcionar para envelope{" "}
+                  {earmarkObrigatorio ? (
+                    <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                      · recomendado para Reserva/Objetivos
                     </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {earmarkObrigatorio && semEarmark && (
-              <p className="text-xs text-amber-700 dark:text-amber-300">
-                Sem direcionar, esse aporte não cai em nenhum Fundo / Reserva —
-                cada um conta só o que foi explicitamente direcionado para ele.
-              </p>
-            )}
-            {!earmarkObrigatorio && (
-              <p className="text-xs text-muted-foreground">
-                Gastos sem direcionamento caem nos envelopes pelo casamento de
-                categoria. Direcione manualmente quando quiser garantir que o
-                gasto pertence a um envelope específico.
-              </p>
-            )}
-          </div>
-
+                  ) : (
+                    <span className="text-xs font-normal text-muted-foreground">
+                      · opcional
+                    </span>
+                  )}
+                </Label>
+                <Select
+                  value={form.watch("distribuicao_id")}
+                  onValueChange={(value) =>
+                    form.setValue("distribuicao_id", value, {
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <SelectTrigger id="distribuicao_id">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SEM_EARMARK}>
+                      Sem direcionamento (categorização automática)
+                    </SelectItem>
+                    {(distribuicoes.data ?? []).map((d) => (
+                      <SelectItem key={d.id} value={String(d.id)}>
+                        {d.categoria}
+                        {d.subcategoria ? ` › ${d.subcategoria}` : ""}{" "}
+                        <span className="text-xs text-muted-foreground">
+                          ({labelDoTipo(d.tipo_categoria)})
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {earmarkObrigatorio && semEarmark && (
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    Sem direcionar, esse aporte não cai em nenhum Fundo /
+                    Reserva — cada um conta só o que foi explicitamente
+                    direcionado para ele.
+                  </p>
+                )}
+                {!earmarkObrigatorio && (
+                  <p className="text-xs text-muted-foreground">
+                    Gastos sem direcionamento caem nos envelopes pelo casamento
+                    de categoria. Direcione manualmente quando quiser garantir
+                    que o gasto pertence a um envelope específico.
+                  </p>
+                )}
+              </div>
+            </div>
+          </details>
           <label className="flex cursor-pointer items-center gap-2 rounded-md border p-3 text-sm">
             <input
               type="checkbox"
               className="h-4 w-4 rounded border-input"
+              aria-invalid={!!form.formState.errors.recurring}
+              aria-describedby="recurring-error"
               {...form.register("recurring")}
             />
-            <span className="font-medium">Gasto fixo</span>
+            <span className="font-medium">Recorrente</span>
             <span className="ml-auto text-xs text-muted-foreground">
-              Conta como custo fixo mensal
+              Mensal
             </span>
           </label>
 
+          {form.watch("recurring") && (
+            <p className="text-xs text-muted-foreground">
+              Periodicidade mensal. Este valor compõe seus custos fixos.
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Data de registro:{" "}
+            {expense
+              ? new Date(expense.created_at).toLocaleDateString("pt-BR")
+              : new Date().toLocaleDateString("pt-BR")}
+          </p>
+          {form.formState.errors.root && (
+            <p role="alert" className="text-sm text-destructive">
+              {form.formState.errors.root.message}
+            </p>
+          )}
           <DialogFooter>
             <Button
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              disabled={submitting}
+              disabled={submitting || form.formState.isSubmitting}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button
+              type="submit"
+              disabled={submitting || form.formState.isSubmitting}
+            >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isEdit ? "Salvar alterações" : "Adicionar gasto"}
+              {submitting
+                ? "Salvando..."
+                : isEdit
+                  ? "Salvar alterações"
+                  : "Adicionar gasto"}
             </Button>
           </DialogFooter>
         </form>

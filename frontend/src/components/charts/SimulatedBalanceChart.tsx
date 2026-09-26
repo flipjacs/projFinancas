@@ -80,31 +80,33 @@ export function SimulatedBalanceChart({
         >
           <defs>
             <linearGradient id="simulatedFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="hsl(38 92% 50%)" stopOpacity={0.35} />
+              <stop
+                offset="0%"
+                stopColor="hsl(38 92% 50%)"
+                stopOpacity={0.35}
+              />
               <stop offset="100%" stopColor="hsl(38 92% 50%)" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="hsl(var(--border))"
+            stroke="hsl(var(--chart-grid))"
             vertical={false}
           />
           <XAxis
             dataKey="label"
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--chart-axis))"
             tickLine={false}
             axisLine={false}
             fontSize={12}
           />
           <YAxis
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--chart-axis))"
             tickLine={false}
             axisLine={false}
             fontSize={12}
             tickFormatter={(v: number) =>
-              v >= 1000 || v <= -1000
-                ? `${Math.round(v / 1000)}k`
-                : String(v)
+              v >= 1000 || v <= -1000 ? `${Math.round(v / 1000)}k` : String(v)
             }
           />
           <Tooltip
@@ -123,7 +125,7 @@ export function SimulatedBalanceChart({
           />
           <ReferenceLine
             y={0}
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--chart-axis))"
             strokeDasharray="4 4"
           />
           <Legend
@@ -134,6 +136,7 @@ export function SimulatedBalanceChart({
             }
           />
           <Area
+            isAnimationActive={false}
             type="monotone"
             dataKey="simulated"
             stroke="hsl(38 92% 50%)"
@@ -141,6 +144,7 @@ export function SimulatedBalanceChart({
             fill="url(#simulatedFill)"
           />
           <Line
+            isAnimationActive={false}
             type="monotone"
             dataKey="projected"
             stroke="hsl(var(--primary))"

@@ -38,9 +38,7 @@ export function VerdictCard({ result }: Props) {
           <span
             className={cn(
               "relative flex h-16 w-16 items-center justify-center rounded-full",
-              approved
-                ? "bg-emerald-500 text-white"
-                : "bg-red-500 text-white",
+              approved ? "bg-emerald-500 text-white" : "bg-red-500 text-white",
             )}
           >
             {approved ? (
@@ -58,7 +56,9 @@ export function VerdictCard({ result }: Props) {
             </h2>
             <RiskBadge level={result.risk_level} />
           </div>
-          <p className="text-sm text-muted-foreground">{result.recommendation}</p>
+          <p className="text-sm text-muted-foreground">
+            {result.recommendation}
+          </p>
         </div>
       </CardContent>
     </Card>

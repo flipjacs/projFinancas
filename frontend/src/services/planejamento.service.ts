@@ -13,7 +13,9 @@ import type {
 export const planejamentoService = {
   // ----- Distribuição -----
   async listarDistribuicoes(): Promise<Distribuicao[]> {
-    const { data } = await api.get<Distribuicao[]>("/planejamento/distribuicao");
+    const { data } = await api.get<Distribuicao[]>(
+      "/planejamento/distribuicao",
+    );
     return data;
   },
 
@@ -54,7 +56,10 @@ export const planejamentoService = {
     return data;
   },
 
-  async atualizarObjetivo(id: number, payload: ObjetivoUpdate): Promise<Objetivo> {
+  async atualizarObjetivo(
+    id: number,
+    payload: ObjetivoUpdate,
+  ): Promise<Objetivo> {
     const { data } = await api.put<Objetivo>(
       `/planejamento/objetivos/${id}`,
       payload,

@@ -1,32 +1,15 @@
 import type { LucideIcon } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
 interface StatCardProps {
   label: string;
   value: string;
   icon?: LucideIcon;
   hint?: string;
   loading?: boolean;
-  /** Tints the icon — useful to signal positive/negative metrics. */
   tone?: "default" | "positive" | "warning" | "negative";
   className?: string;
 }
-
-const TONE_STYLES: Record<NonNullable<StatCardProps["tone"]>, string> = {
-  default: "bg-primary/10 text-primary",
-  positive: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  negative: "bg-destructive/10 text-destructive",
-};
-
 export function StatCard({
   label,
   value,
@@ -37,32 +20,36 @@ export function StatCard({
   className,
 }: StatCardProps) {
   return (
-    <Card className={cn("relative overflow-hidden", className)}>
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <div className="space-y-1">
-          <CardDescription>{label}</CardDescription>
-          {loading ? (
-            <Skeleton className="h-8 w-32" />
-          ) : (
-            <CardTitle className="text-3xl tabular-nums">{value}</CardTitle>
-          )}
-        </div>
+    <div
+      className={cn("surface-card min-w-0 rounded-lg border bg-card p-5", className)}
+      aria-busy={loading}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <p className="metric-label text-xs font-medium text-muted-foreground">{label}</p>
         {Icon && (
-          <span
-            className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-lg",
-              TONE_STYLES[tone],
-            )}
-          >
-            <Icon className="h-5 w-5" />
-          </span>
+          <Icon
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={1.5}
+            aria-hidden="true"
+          />
         )}
-      </CardHeader>
-      {hint && (
-        <CardContent className="text-xs text-muted-foreground">
-          {hint}
-        </CardContent>
+      </div>
+      {loading ? (
+        <Skeleton className="my-4 h-9 w-3/4" />
+      ) : (
+        <p
+          className={cn(
+            "mb-3 mt-4 break-words text-[clamp(1.35rem,2.2vw,1.85rem)] font-semibold leading-tight tracking-tight tabular-nums",
+            tone === "positive" && "text-primary",
+            tone === "negative" && "text-destructive",
+          )}
+        >
+          {value}
+        </p>
       )}
-    </Card>
+      {hint && (
+        <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>
+      )}
+    </div>
   );
 }

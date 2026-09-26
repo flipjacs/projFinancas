@@ -20,12 +20,13 @@ const STORAGE_KEY = "theme";
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 function readInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-  const stored = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
-  if (stored === "dark" || stored === "light") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === "dark" || stored === "light") return stored;
+  } catch {
+    /* Storage can be disabled by the browser. */
+  }
+  return "dark";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -52,7 +53,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [theme, setTheme, toggleTheme],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 export function useTheme(): ThemeContextValue {

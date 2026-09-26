@@ -3,15 +3,15 @@ import type { TipoCategoria } from "@/types/planejamento";
 // Paleta usada nos cards e no gráfico — pensada para funcionar em dark mode
 // e ser distinguível entre as categorias.
 export const CORES_TIPO_CATEGORIA: Record<TipoCategoria, string> = {
-  Fixo: "#6366f1",
-  Reserva: "#10b981",
-  Alimentacao: "#f59e0b",
-  Lazer: "#ec4899",
-  Transporte: "#0ea5e9",
-  Educacao: "#f97316",
-  Saude: "#ef4444",
-  Objetivos: "#8b5cf6",
-  Outros: "#64748b",
+  Fixo: "var(--category-housing)",
+  Reserva: "var(--category-savings)",
+  Alimentacao: "var(--category-shopping)",
+  Lazer: "var(--category-entertainment)",
+  Transporte: "var(--category-utilities)",
+  Educacao: "var(--category-food)",
+  Saude: "var(--category-health)",
+  Objetivos: "var(--category-education)",
+  Outros: "var(--category-other)",
 };
 
 export const LABEL_TIPO_CATEGORIA: Record<TipoCategoria, string> = {
@@ -28,8 +28,8 @@ export const LABEL_TIPO_CATEGORIA: Record<TipoCategoria, string> = {
 
 // Cores legadas para tipo_categoria que vieram de bases antigas.
 const CORES_LEGADAS: Record<string, string> = {
-  "Fundo Viagem": "#06b6d4",
-  "Objetivos Tech": "#8b5cf6",
+  "Fundo Viagem": "var(--category-transport)",
+  "Objetivos Tech": "var(--category-education)",
 };
 
 export function corDoTipo(tipo: string): string {

@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { BrowserRouter, useNavigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 import { Toaster } from "@/components/ui/sonner";
 import { AppRouter } from "@/routes/AppRouter";
@@ -8,21 +8,9 @@ import { TopProgress } from "@/components/TopProgress";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QuickNavDialog } from "@/components/QuickNavDialog";
 import { ShortcutsDialog } from "@/components/ShortcutsDialog";
+import { queryClient } from "@/lib/queryClient";
+import { useSessionLifecycle } from "@/hooks/useAuth";
 import { useShortcuts } from "@/hooks/useShortcuts";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 30_000,
-      gcTime: 5 * 60_000,
-    },
-    mutations: {
-      retry: 0,
-    },
-  },
-});
 
 export function App() {
   return (
@@ -46,6 +34,7 @@ export function App() {
  * a "?" shortcuts dialog, and vim-style "g <letter>" navigation.
  */
 function GlobalChrome() {
+  useSessionLifecycle();
   const navigate = useNavigate();
   const { toggleTheme } = useTheme();
   const [quickNavOpen, setQuickNavOpen] = useState(false);

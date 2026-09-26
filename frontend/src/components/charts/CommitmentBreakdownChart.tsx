@@ -35,16 +35,21 @@ export function CommitmentBreakdownChart({
         "Gastos fixos": recurringExpenses,
         "Parcelas atuais": currentInstallmentCommitment,
         "Nova compra": newInstallmentValue,
-        "Sobra": free,
+        Sobra: free,
       },
     ];
-  }, [salary, recurringExpenses, currentInstallmentCommitment, newInstallmentValue]);
+  }, [
+    salary,
+    recurringExpenses,
+    currentInstallmentCommitment,
+    newInstallmentValue,
+  ]);
 
   const colors: Record<string, string> = {
     "Gastos fixos": "hsl(var(--muted-foreground))",
     "Parcelas atuais": "hsl(var(--primary))",
     "Nova compra": "hsl(38 92% 50%)",
-    "Sobra": "hsl(160 84% 39%)",
+    Sobra: "hsl(160 84% 39%)",
   };
 
   return (
@@ -59,13 +64,13 @@ export function CommitmentBreakdownChart({
         >
           <CartesianGrid
             horizontal={false}
-            stroke="hsl(var(--border))"
+            stroke="hsl(var(--chart-grid))"
             strokeDasharray="3 3"
           />
           <XAxis
             type="number"
             tickFormatter={(v: number) => `${Math.round(v * 100)}%`}
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--chart-axis))"
             fontSize={12}
             tickLine={false}
             axisLine={false}
@@ -73,7 +78,7 @@ export function CommitmentBreakdownChart({
           <YAxis
             type="category"
             dataKey="label"
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--chart-axis))"
             fontSize={12}
             tickLine={false}
             axisLine={false}
@@ -94,13 +99,19 @@ export function CommitmentBreakdownChart({
             iconType="circle"
             iconSize={8}
           />
-          {(["Gastos fixos", "Parcelas atuais", "Nova compra", "Sobra"] as const).map(
-            (key) => (
-              <Bar key={key} dataKey={key} stackId="a" radius={[4, 4, 4, 4]}>
-                <Cell fill={colors[key]} />
-              </Bar>
-            ),
-          )}
+          {(
+            ["Gastos fixos", "Parcelas atuais", "Nova compra", "Sobra"] as const
+          ).map((key) => (
+            <Bar
+              isAnimationActive={false}
+              key={key}
+              dataKey={key}
+              stackId="a"
+              radius={[4, 4, 4, 4]}
+            >
+              <Cell fill={colors[key]} />
+            </Bar>
+          ))}
         </BarChart>
       </ResponsiveContainer>
     </div>

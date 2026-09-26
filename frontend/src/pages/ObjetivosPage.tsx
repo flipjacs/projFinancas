@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/StatCard";
 import { ChartCard } from "@/components/ChartCard";
 import { EmptyState } from "@/components/EmptyState";
+import { GoalContributionDialog } from "@/components/planejamento/GoalContributionDialog";
+import { QueryErrorState } from "@/components/QueryErrorState";
 import { CardObjetivo } from "@/components/planejamento/CardObjetivo";
 import { ConfirmDialog } from "@/components/planejamento/ConfirmDialog";
 import { ObjetivoFormDialog } from "@/components/planejamento/ObjetivoFormDialog";
@@ -28,7 +30,10 @@ import {
   YAxis,
 } from "recharts";
 
+const EMPTY_GOALS: Objetivo[] = [];
+
 export function ObjetivosPage() {
+  const [contributing, setContributing] = useState<Objetivo | null>(null);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Objetivo | null>(null);
   const [deleting, setDeleting] = useState<Objetivo | null>(null);
@@ -38,7 +43,7 @@ export function ObjetivosPage() {
   const resumo = useResumoPlanejamento();
   const { create, update, remove } = useObjetivoMutations();
 
-  const lista = objetivos.data ?? [];
+  const lista = objetivos.data ?? EMPTY_GOALS;
 
   // Indexa as distribuições que linkam para cada objetivo.
   const distribuicaoPorObjetivo = useMemo(() => {
@@ -82,6 +87,19 @@ export function ObjetivosPage() {
     [lista],
   );
 
+  if (objetivos.isError || distribuicoes.isError || resumo.isError)
+    return (
+      <QueryErrorState
+        error={objetivos.error ?? distribuicoes.error ?? resumo.error}
+        title="Não foi possível carregar os objetivos"
+        onRetry={() => {
+          void objetivos.refetch();
+          void distribuicoes.refetch();
+          void resumo.refetch();
+        }}
+      />
+    );
+
   return (
     <div className="space-y-8">
       <header className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
@@ -97,9 +115,7 @@ export function ObjetivosPage() {
               Voltar para o planejamento
             </Link>
           </Button>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Objetivos financeiros
-          </h1>
+          <h1 className="page-heading">Objetivos financeiros</h1>
           <p className="text-sm text-muted-foreground">
             Defina metas, prazos e veja quanto guardar por mês.
           </p>
@@ -110,7 +126,7 @@ export function ObjetivosPage() {
         </Button>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           label="Total das metas"
           value={formatCurrency(stats.totalMeta)}
@@ -145,16 +161,16 @@ export function ObjetivosPage() {
               <BarChart data={dadosGrafico}>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="hsl(var(--border))"
+                  stroke="hsl(var(--chart-grid))"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="nome"
-                  stroke="hsl(var(--muted-foreground))"
+                  stroke="hsl(var(--chart-axis))"
                   fontSize={12}
                 />
                 <YAxis
-                  stroke="hsl(var(--muted-foreground))"
+                  stroke="hsl(var(--chart-axis))"
                   fontSize={12}
                   tickFormatter={(v) =>
                     Number(v).toLocaleString("pt-BR", {
@@ -178,12 +194,14 @@ export function ObjetivosPage() {
                   ]}
                 />
                 <Bar
+                  isAnimationActive={false}
                   dataKey="guardado"
                   stackId="a"
-                  fill="#10b981"
+                  fill="var(--chart-goal)"
                   radius={[0, 0, 4, 4]}
                 />
                 <Bar
+                  isAnimationActive={false}
                   dataKey="faltando"
                   stackId="a"
                   fill="hsl(var(--muted))"
@@ -199,13 +217,12 @@ export function ObjetivosPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold">Metas em andamento</h2>
           <p className="text-xs text-muted-foreground">
-            {lista.length}{" "}
-            {lista.length === 1 ? "objetivo" : "objetivos"}
+            {lista.length} {lista.length === 1 ? "objetivo" : "objetivos"}
           </p>
         </div>
 
         {objetivos.isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Card key={i}>
                 <CardContent className="space-y-4 p-5">
@@ -230,7 +247,7 @@ export function ObjetivosPage() {
             }
           />
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {lista.map((item, idx) => (
               <CardObjetivo
                 key={item.id}
@@ -238,6 +255,7 @@ export function ObjetivosPage() {
                 objetivo={item}
                 distribuicaoLinkada={distribuicaoPorObjetivo.get(item.id)}
                 alocacaoMensal={alocacaoPorObjetivo.get(item.id)}
+                onContribute={setContributing}
                 onEdit={setEditing}
                 onDelete={setDeleting}
               />
@@ -246,6 +264,12 @@ export function ObjetivosPage() {
         )}
       </section>
 
+      {contributing && (
+        <GoalContributionDialog
+          goal={contributing}
+          onClose={() => setContributing(null)}
+        />
+      )}
       <ObjetivoFormDialog
         open={creating}
         onOpenChange={setCreating}

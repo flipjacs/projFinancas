@@ -7,8 +7,11 @@ import type {
 } from "@/types/expense";
 
 export const expenseService = {
-  async list(params: ExpenseListParams = {}): Promise<Expense[]> {
-    const { data } = await api.get<Expense[]>("/expenses", { params });
+  async list(
+    params: ExpenseListParams = {},
+    signal?: AbortSignal,
+  ): Promise<Expense[]> {
+    const { data } = await api.get<Expense[]>("/expenses", { params, signal });
     return data;
   },
 

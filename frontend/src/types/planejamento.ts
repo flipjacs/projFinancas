@@ -76,9 +76,7 @@ export interface DistribuicaoCreate {
   objetivo?: ObjetivoInline | null;
 }
 
-export type DistribuicaoUpdate = Partial<
-  Omit<DistribuicaoCreate, "objetivo">
->;
+export type DistribuicaoUpdate = Partial<Omit<DistribuicaoCreate, "objetivo">>;
 
 export interface Objetivo {
   id: number;

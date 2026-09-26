@@ -22,8 +22,14 @@ interface Props {
   index?: number;
 }
 
-export function InstallmentCard({ installment, onEdit, onDelete, index = 0 }: Props) {
-  const paid = installment.total_installments - installment.remaining_installments;
+export function InstallmentCard({
+  installment,
+  onEdit,
+  onDelete,
+  index = 0,
+}: Props) {
+  const paid =
+    installment.total_installments - installment.remaining_installments;
   const progress = installment.total_installments
     ? (paid / installment.total_installments) * 100
     : 0;
@@ -34,7 +40,7 @@ export function InstallmentCard({ installment, onEdit, onDelete, index = 0 }: Pr
   return (
     <Card
       className={cn(
-        "group relative overflow-hidden border-border/60 transition-shadow duration-300 hover:shadow-lg animate-slide-up",
+        "group relative overflow-hidden border-border/60 transition-shadow duration-300 hover:border-muted-foreground/40 animate-slide-up",
         isFinished && "opacity-80",
       )}
       style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
@@ -51,16 +57,20 @@ export function InstallmentCard({ installment, onEdit, onDelete, index = 0 }: Pr
             </h3>
             <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
               <CalendarDays className="h-3.5 w-3.5" />
-              {format(parseISO(installment.purchase_date), "d 'de' MMM',' yyyy", {
-                locale: ptBR,
-              })}
+              {format(
+                parseISO(installment.purchase_date),
+                "d 'de' MMM',' yyyy",
+                {
+                  locale: ptBR,
+                },
+              )}
             </p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                 <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Abrir menu</span>
+                <span className="sr-only">Ações de {installment.product_name}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -80,7 +90,7 @@ export function InstallmentCard({ installment, onEdit, onDelete, index = 0 }: Pr
         </header>
 
         <div>
-          <div className="flex items-baseline justify-between gap-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
             <span className="text-2xl font-semibold tabular-nums">
               {formatCurrency(installment.installment_value)}
             </span>
@@ -102,10 +112,9 @@ export function InstallmentCard({ installment, onEdit, onDelete, index = 0 }: Pr
           </div>
           <Progress
             value={progress}
-            indicatorClassName={cn(
-              "bg-gradient-to-r from-primary to-primary/70",
-              isFinished && "from-emerald-500 to-emerald-400",
-            )}
+            ariaLabel={`Parcelas pagas de ${installment.product_name}`}
+            animated={false}
+            indicatorClassName={cn("bg-primary", isFinished && "bg-primary")}
           />
         </div>
 

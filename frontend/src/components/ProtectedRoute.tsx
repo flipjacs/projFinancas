@@ -1,4 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { QueryErrorState } from "@/components/QueryErrorState";
+import { bootstrapSession } from "@/hooks/useAuth";
 import { useAuth } from "@/hooks/useAuth";
 
 /**
@@ -10,8 +12,19 @@ import { useAuth } from "@/hooks/useAuth";
  *   o destino original em location.state.
  */
 export function ProtectedRoute() {
-  const { isAuthenticated, hydrated } = useAuth();
+  const { isAuthenticated, hydrated, bootstrapError } = useAuth();
   const location = useLocation();
+
+  if (bootstrapError)
+    return (
+      <div className="mx-auto max-w-lg p-6">
+        <QueryErrorState
+          error={null}
+          title="Não foi possível verificar sua sessão"
+          onRetry={() => void bootstrapSession()}
+        />
+      </div>
+    );
 
   if (!hydrated) {
     return (

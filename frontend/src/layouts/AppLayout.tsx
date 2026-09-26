@@ -1,5 +1,6 @@
-import { Suspense, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Suspense, useEffect, useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import { NAV_ITEMS } from "@/layouts/nav";
 import { Navbar } from "@/layouts/Navbar";
 import { Sidebar } from "@/layouts/Sidebar";
 import { PageFallback } from "@/components/PageFallback";
@@ -8,8 +9,15 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const [collapsed, setCollapsed] = useState(false);
+  const { pathname } = useLocation();
+  useEffect(() => {
+    document.title = `${NAV_ITEMS.find((item) => item.to === pathname)?.label ?? "Financeiro"} · Financeiro`;
+    document.getElementById("main")?.focus({ preventScroll: true });
+  }, [pathname]);
+
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-dvh bg-background">
       {/* Skip link for keyboard users — hidden until focused. */}
       <a
         href="#main"
@@ -18,16 +26,21 @@ export function AppLayout() {
         Ir para o conteúdo
       </a>
 
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar
+        collapsed={collapsed}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Navbar onToggleSidebar={() => setSidebarOpen((open) => !open)} />
-        <main
-          id="main"
-          tabIndex={-1}
-          className="flex-1 focus:outline-none"
-        >
-          <div className="mx-auto w-full max-w-7xl animate-fade-in px-4 py-6 sm:px-6 md:px-8 md:py-8">
+        <Navbar
+          collapsed={collapsed}
+          mobileOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen((open) => !open)}
+          onCollapse={() => setCollapsed((value) => !value)}
+        />
+        <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
+          <div className="mx-auto w-full max-w-[1440px] px-4 py-7 sm:px-6 lg:px-9 lg:py-9">
             <ErrorBoundary>
               <Suspense fallback={<PageFallback />}>
                 <Outlet />

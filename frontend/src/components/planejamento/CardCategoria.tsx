@@ -45,19 +45,17 @@ export function CardCategoria({
   const cor = corDoTipo(distribuicao.tipo_categoria);
   const percentual = Number(resumo?.percentual_utilizado ?? 0);
   const gastoAtual = Number(resumo?.gasto_atual ?? 0);
-  const valorPlanejado = Number(
-    resumo?.valor_planejado ?? distribuicao.valor,
-  );
+  const valorPlanejado = Number(resumo?.valor_planejado ?? distribuicao.valor);
   const limite = Number(resumo?.limite_mensal ?? distribuicao.limite_mensal);
   const excedido = resumo?.excedido ?? false;
   const proximo = resumo?.proximo_do_limite ?? false;
   const isFixo = distribuicao.tipo_categoria === "Fixo";
-  const fixos = isFixo ? composicaoFixos ?? [] : [];
+  const fixos = isFixo ? (composicaoFixos ?? []) : [];
 
   return (
     <Card
       className={cn(
-        "group relative overflow-hidden transition-shadow duration-300 hover:shadow-lg animate-slide-up",
+        "group relative overflow-hidden transition-shadow duration-300 hover:border-muted-foreground/40 animate-slide-up",
         excedido && "border-destructive/60",
         proximo && "border-amber-500/60",
       )}
@@ -66,7 +64,7 @@ export function CardCategoria({
       {/* Faixa colorida no topo identifica o tipo de categoria */}
       <div
         aria-hidden
-        className="absolute inset-x-0 top-0 h-1"
+        className="absolute bottom-5 left-0 top-5 w-0.5"
         style={{ backgroundColor: cor }}
       />
 
@@ -80,8 +78,8 @@ export function CardCategoria({
               <span
                 className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
                 style={{
-                  backgroundColor: `${cor}1f`,
-                  color: cor,
+                  backgroundColor: `color-mix(in srgb, ${cor} 12.157%, transparent)`,
+                  color: "hsl(var(--foreground))",
                 }}
               >
                 <span
@@ -92,7 +90,9 @@ export function CardCategoria({
                 {distribuicao.subcategoria && (
                   <>
                     <span className="opacity-60">›</span>
-                    <span className="opacity-90">{distribuicao.subcategoria}</span>
+                    <span className="opacity-90">
+                      {distribuicao.subcategoria}
+                    </span>
                   </>
                 )}
               </span>
@@ -108,7 +108,7 @@ export function CardCategoria({
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                 <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Abrir menu</span>
+                <span className="sr-only">Ações de {distribuicao.categoria}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -128,7 +128,7 @@ export function CardCategoria({
         </header>
 
         <div>
-          <div className="flex items-baseline justify-between gap-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
             <span className="text-2xl font-semibold tabular-nums">
               {formatCurrency(valorPlanejado)}
             </span>
@@ -162,7 +162,16 @@ export function CardCategoria({
               {percentual.toFixed(0)}%
             </span>
           </div>
-          <BarraProgresso percentual={percentual} cor={cor} />
+          <BarraProgresso
+            percentual={percentual}
+            cor={cor}
+            ariaLabel={`Utilização de ${distribuicao.categoria}`}
+          />
+          <p className="text-xs text-muted-foreground">
+            {gastoAtual > limite
+              ? `Excedido em ${formatCurrency(gastoAtual - limite)}`
+              : `Restante do limite: ${formatCurrency(limite - gastoAtual)}`}
+          </p>
         </div>
 
         {excedido && (

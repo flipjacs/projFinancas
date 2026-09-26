@@ -9,12 +9,12 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { safeReturnPath } from "@/lib/session";
 import { ApiError } from "@/types/api";
 
 const loginSchema = z.object({
@@ -27,7 +27,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, sessionExpired } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -39,9 +39,9 @@ export function LoginPage() {
     defaultValues: { email: "", password: "" },
   });
 
-  const from =
-    (location.state as { from?: { pathname?: string } } | null)?.from
-      ?.pathname ?? "/painel";
+  const from = safeReturnPath(
+    (location.state as { from?: { pathname?: string } } | null)?.from?.pathname,
+  );
 
   async function onSubmit(values: LoginValues) {
     setServerError(null);
@@ -58,12 +58,22 @@ export function LoginPage() {
   return (
     <Card>
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl">Bem-vindo de volta</CardTitle>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Bem-vindo de volta
+        </h1>
         <CardDescription>
           Entre na sua conta para acompanhar suas finanças.
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {sessionExpired && (
+          <p
+            role="status"
+            className="mb-4 rounded-md border p-3 text-sm text-muted-foreground"
+          >
+            Sua sessão expirou. Entre novamente para continuar.
+          </p>
+        )}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -72,10 +82,18 @@ export function LoginPage() {
               type="email"
               autoComplete="email"
               placeholder="voce@exemplo.com"
+              aria-invalid={!!errors.email}
+              aria-describedby="email-error"
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <p
+                id="email-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {errors.email.message}
+              </p>
             )}
           </div>
 
@@ -85,10 +103,16 @@ export function LoginPage() {
               id="password"
               type="password"
               autoComplete="current-password"
+              aria-invalid={!!errors.password}
+              aria-describedby="password-error"
               {...register("password")}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">
+              <p
+                id="password-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {errors.password.message}
               </p>
             )}
@@ -105,12 +129,15 @@ export function LoginPage() {
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Entrar
+            {isSubmitting ? "Entrando..." : "Entrar"}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
             Ainda não tem conta?{" "}
-            <Link to="/cadastro" className="font-medium text-primary hover:underline">
+            <Link
+              to="/cadastro"
+              className="font-medium text-primary hover:underline"
+            >
               Criar agora
             </Link>
           </p>

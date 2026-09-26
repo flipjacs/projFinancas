@@ -55,29 +55,41 @@ export function FuturePaymentsChart({ months }: Props) {
   }
 
   return (
-    <div className="h-64 w-full">
+    <div>
+      <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 16, right: 12, bottom: 0, left: -8 }}>
+        <AreaChart
+          data={data}
+          margin={{ top: 16, right: 12, bottom: 0, left: -8 }}
+        >
           <defs>
             <linearGradient id="commitmentGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+              <stop
+                offset="0%"
+                stopColor="hsl(var(--primary))"
+                stopOpacity={0.45}
+              />
+              <stop
+                offset="100%"
+                stopColor="hsl(var(--primary))"
+                stopOpacity={0}
+              />
             </linearGradient>
           </defs>
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="hsl(var(--border))"
+            stroke="hsl(var(--chart-grid))"
             vertical={false}
           />
           <XAxis
             dataKey="label"
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--chart-axis))"
             tickLine={false}
             axisLine={false}
             fontSize={12}
           />
           <YAxis
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--chart-axis))"
             tickLine={false}
             axisLine={false}
             fontSize={12}
@@ -102,6 +114,7 @@ export function FuturePaymentsChart({ months }: Props) {
             }}
           />
           <Area
+            isAnimationActive={false}
             type="monotone"
             dataKey="commitment"
             stroke="hsl(var(--primary))"
@@ -110,6 +123,17 @@ export function FuturePaymentsChart({ months }: Props) {
           />
         </AreaChart>
       </ResponsiveContainer>
+      </div>
+      <details className="mt-4 text-sm text-muted-foreground">
+        <summary className="cursor-pointer">Ver valores por mês</summary>
+        <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+          {data.map((month) => (
+            <div key={month.label} className="flex justify-between gap-3 border-b border-border py-2">
+              <dt>{month.label}</dt><dd className="font-medium text-foreground">{formatCurrency(month.commitment)}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
     </div>
   );
 }

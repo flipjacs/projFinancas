@@ -21,35 +21,35 @@ const BLOCOS: {
     key: "essencial",
     label: "Essencial",
     icon: Leaf,
-    className: "text-emerald-600 dark:text-emerald-400",
+    className: "text-muted-foreground",
     hint: "moradia, contas, alimentação base",
   },
   {
     key: "lazer",
     label: "Lazer",
     icon: Sparkles,
-    className: "text-pink-600 dark:text-pink-400",
+    className: "text-muted-foreground",
     hint: "diversão, refeições fora, streaming",
   },
   {
     key: "crescimento",
     label: "Crescimento",
     icon: TrendingUp,
-    className: "text-indigo-600 dark:text-indigo-400",
+    className: "text-muted-foreground",
     hint: "reserva, cursos, investimentos",
   },
   {
     key: "sobrevivencia",
     label: "Sobrevivência",
     icon: Wallet,
-    className: "text-sky-600 dark:text-sky-400",
+    className: "text-muted-foreground",
     hint: "saúde, urgências",
   },
   {
     key: "emocional",
     label: "Emocional",
     icon: Heart,
-    className: "text-rose-600 dark:text-rose-400",
+    className: "text-muted-foreground",
     hint: "compra por impulso, conforto",
   },
 ];
@@ -66,7 +66,7 @@ export function PainelComportamental({ comportamental, loading }: Props) {
           impacto real no orçamento.
         </p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {BLOCOS.map(({ key, label, icon: Icon, className, hint }) => (
           <Card key={key} className="overflow-hidden">
             <CardContent className="space-y-2 p-4">

@@ -62,7 +62,10 @@ export function HealthScoreCard({ score, className }: Props) {
               strokeWidth="8"
               fill="none"
               strokeLinecap="round"
-              className={cn("transition-[stroke-dashoffset]", ringStroke(clamped))}
+              className={cn(
+                "transition-[stroke-dashoffset]",
+                ringStroke(clamped),
+              )}
               strokeDasharray={circumference}
               strokeDashoffset={offset}
             />

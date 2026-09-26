@@ -23,7 +23,7 @@ export function CategoryFilter({ value, onChange }: Props) {
         onChange(next as ExpenseCategory | typeof ALL_CATEGORIES)
       }
     >
-      <SelectTrigger className="w-[180px]">
+      <SelectTrigger id="expense-category" className="w-full">
         <SelectValue placeholder="Todas as categorias" />
       </SelectTrigger>
       <SelectContent>
